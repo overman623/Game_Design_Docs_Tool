@@ -1498,23 +1498,6 @@
       copy.append(intro);
     }
 
-    const gameName = clean(state.concept.intro.name);
-    const oneLiner = clean(state.concept.intro.oneLiner);
-    if (gameName || oneLiner) {
-      const identity = createElement("div", "concept-identity");
-      if (gameName) {
-        const name = createElement("h2", "identity-name");
-        name.textContent = gameName;
-        identity.append(name);
-      }
-      if (oneLiner) {
-        const summary = createElement("p", "identity-summary");
-        summary.textContent = oneLiner;
-        identity.append(summary);
-      }
-      copy.append(identity);
-    }
-
     header.append(copy);
     return header;
   }
@@ -1523,6 +1506,9 @@
     const section = createDocumentSection(sectionNumber, "게임 소개");
     const list = createElement("div", "resume-entry-list");
     const intro = state.concept.intro;
+
+    appendTextEntry(list, "게임이름", intro.name);
+    appendTextEntry(list, "한 줄 소개", intro.oneLiner);
 
     const conceptText = clean(intro.coreConcept);
     const conceptImage = sanitizeImage(intro.coreConceptImage);
