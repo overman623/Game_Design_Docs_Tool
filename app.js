@@ -200,6 +200,7 @@
   };
   let saveTimer = null;
   let paginationFrame = null;
+  let lastImagePasteTarget = null;
 
   function createDefaultConcept() {
     const firstGame = createEmptyComparisonGame("비교 대상 게임 1");
@@ -393,6 +394,7 @@
     syncFormFromState();
     renderPreview();
     updatePresetNote();
+    prepareImagePasteTargets();
     bindEvents();
     setSaveStatus("자동 저장됐어요", "saved");
   }
@@ -401,6 +403,9 @@
     dom.form.addEventListener("input", handleFormChange);
     dom.form.addEventListener("change", handleFormChange);
     dom.form.addEventListener("click", handleFormClick);
+    dom.form.addEventListener("focusin", rememberImagePasteTarget);
+    dom.form.addEventListener("pointerdown", rememberImagePasteTarget);
+    document.addEventListener("paste", handleImagePaste);
 
     dom.refreshButton.addEventListener("click", () => {
       renderPreview();
@@ -415,6 +420,102 @@
 
     window.addEventListener("beforeunload", saveStateNow);
     window.addEventListener("resize", schedulePreviewPagination);
+  }
+
+  function rememberImagePasteTarget(event) {
+    const target = resolvePasteImageTarget(event.target);
+    if (!target) return;
+
+    lastImagePasteTarget = target;
+
+    const panel = event.target.closest?.(".photo-upload-panel");
+    if (
+      panel &&
+      event.type === "pointerdown" &&
+      !event.target.closest("input, textarea, button, label, select, a")
+    ) {
+      panel.focus({ preventScroll: true });
+    }
+  }
+
+  function handleImagePaste(event) {
+    const imageFile = getClipboardImageFile(event.clipboardData);
+    if (!imageFile) return;
+
+    const target =
+      resolvePasteImageTarget(event.target) || lastImagePasteTarget;
+    if (!target) return;
+
+    const active = document.activeElement;
+    if (
+      active &&
+      active.matches("input:not([type='file']), textarea") &&
+      !active.closest(".photo-upload-panel")
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (target.kind === "concept") {
+      void applyConceptImageFromFile(target.path, imageFile, {
+        successMessage: "붙여넣은 이미지를 저장했어요.",
+      });
+      return;
+    }
+
+    if (target.kind === "reference") {
+      void applyReferenceImageFromFile(target.itemId, imageFile, {
+        successMessage: "붙여넣은 이미지를 저장했어요.",
+      });
+    }
+  }
+
+  function getClipboardImageFile(clipboardData) {
+    if (!clipboardData) return null;
+
+    const items = Array.from(clipboardData.items || []);
+    for (const item of items) {
+      if (item.kind === "file" && item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) return file;
+      }
+    }
+
+    return (
+      Array.from(clipboardData.files || []).find((file) =>
+        file.type.startsWith("image/"),
+      ) || null
+    );
+  }
+
+  function resolvePasteImageTarget(element) {
+    const panel = element?.closest?.(".photo-upload-panel");
+    if (!panel) return null;
+
+    const conceptField =
+      panel.querySelector("input[data-image-field]")?.dataset.imageField ||
+      panel.querySelector("[data-image-preview]")?.dataset.imagePreview;
+    if (conceptField) return { kind: "concept", path: conceptField };
+
+    const referenceId =
+      panel.querySelector("input[data-reference-image]")?.dataset.itemId ||
+      panel.querySelector("[data-reference-image-preview]")
+        ?.dataset.referenceImagePreview;
+    if (referenceId) return { kind: "reference", itemId: referenceId };
+
+    return null;
+  }
+
+  function prepareImagePasteTargets() {
+    dom.form.querySelectorAll(".photo-upload-panel").forEach((panel) => {
+      panel.tabIndex = 0;
+      panel.classList.add("image-paste-target");
+      panel.setAttribute(
+        "aria-label",
+        "이미지 영역. 클릭한 뒤 Ctrl+V 또는 Command+V로 붙여넣을 수 있습니다.",
+      );
+    });
   }
 
   function handleFormChange(event) {
@@ -590,16 +691,19 @@
     const file = input.files?.[0];
     if (!path || !file) return;
 
+    const saved = await applyConceptImageFromFile(path, file);
+    if (!saved) input.value = "";
+  }
+
+  async function applyConceptImageFromFile(path, file, options = {}) {
     if (!file.type.startsWith("image/")) {
-      input.value = "";
-      setImageStatus(path, "JPG, PNG, WEBP 이미지 파일을 선택해 주세요.", true);
-      return;
+      setImageStatus(path, "JPG, PNG, WEBP 이미지를 선택하거나 붙여넣어 주세요.", true);
+      return false;
     }
 
     if (file.size > 8 * 1024 * 1024) {
-      input.value = "";
-      setImageStatus(path, "이미지는 8MB 이하 파일로 선택해 주세요.", true);
-      return;
+      setImageStatus(path, "이미지는 8MB 이하로 넣어 주세요.", true);
+      return false;
     }
 
     setImageStatus(path, "이미지를 16:9 비율로 정리하고 있어요.");
@@ -610,58 +714,72 @@
       renderImagePreview(path);
       renderPreview();
       scheduleSave();
-      setImageStatus(path, "이미지를 저장했어요.");
+      setImageStatus(
+        path,
+        options.successMessage || "이미지를 저장했어요.",
+      );
+      return true;
     } catch (error) {
       console.warn("이미지를 처리하지 못했습니다.", error);
-      input.value = "";
-      setImageStatus(path, "이미지를 불러오지 못했어요. 다른 파일을 선택해 주세요.", true);
+      setImageStatus(
+        path,
+        "이미지를 불러오지 못했어요. 다른 이미지나 파일을 넣어 주세요.",
+        true,
+      );
+      return false;
     }
   }
 
   async function handleReferenceImageUpload(input) {
-    const item = state.concept.intro.references.find(
-      (reference) => reference.id === input.dataset.itemId,
-    );
+    const itemId = input.dataset.itemId;
     const file = input.files?.[0];
-    if (!item || !file) return;
+    if (!itemId || !file) return;
+
+    const saved = await applyReferenceImageFromFile(itemId, file);
+    if (!saved) input.value = "";
+  }
+
+  async function applyReferenceImageFromFile(itemId, file, options = {}) {
+    const item = state.concept.intro.references.find(
+      (reference) => reference.id === itemId,
+    );
+    if (!item) return false;
 
     if (!file.type.startsWith("image/")) {
-      input.value = "";
       setReferenceImageStatus(
-        item.id,
-        "JPG, PNG, WEBP 이미지 파일을 선택해 주세요.",
+        itemId,
+        "JPG, PNG, WEBP 이미지를 선택하거나 붙여넣어 주세요.",
         true,
       );
-      return;
+      return false;
     }
 
     if (file.size > 8 * 1024 * 1024) {
-      input.value = "";
-      setReferenceImageStatus(
-        item.id,
-        "이미지는 8MB 이하 파일로 선택해 주세요.",
-        true,
-      );
-      return;
+      setReferenceImageStatus(itemId, "이미지는 8MB 이하로 넣어 주세요.", true);
+      return false;
     }
 
-    setReferenceImageStatus(item.id, "이미지를 16:9 비율로 정리하고 있어요.");
+    setReferenceImageStatus(itemId, "이미지를 16:9 비율로 정리하고 있어요.");
 
     try {
       const source = await readFileAsDataUrl(file);
       item.image = await resizeConceptImage(source);
-      renderReferenceImagePreview(item.id);
+      renderReferenceImagePreview(itemId);
       renderPreview();
       scheduleSave();
-      setReferenceImageStatus(item.id, "이미지를 저장했어요.");
+      setReferenceImageStatus(
+        itemId,
+        options.successMessage || "이미지를 저장했어요.",
+      );
+      return true;
     } catch (error) {
       console.warn("레퍼런스 이미지를 처리하지 못했습니다.", error);
-      input.value = "";
       setReferenceImageStatus(
-        item.id,
-        "이미지를 불러오지 못했어요. 다른 파일을 선택해 주세요.",
+        itemId,
+        "이미지를 불러오지 못했어요. 다른 이미지나 파일을 넣어 주세요.",
         true,
       );
+      return false;
     }
   }
 
@@ -802,6 +920,7 @@
     dom.referenceItems.replaceChildren(
       ...references.map((item, index) => createReferenceInputItem(item, index)),
     );
+    prepareImagePasteTargets();
   }
 
   function createReferenceInputItem(item, index) {
@@ -883,7 +1002,8 @@
 
     const status = createElement("p", "field-help");
     status.dataset.referenceImageStatus = item.id;
-    status.textContent = "JPG, PNG, WEBP / 8MB 이하 권장 · 선택 사항";
+    status.textContent =
+      "JPG, PNG, WEBP / 8MB 이하 · 선택 또는 Ctrl+V 붙여넣기";
 
     actions.append(uploadLabel, fileInput, removeImageButton);
     copy.append(strong, description, actions, status);

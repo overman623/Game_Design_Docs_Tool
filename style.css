@@ -739,6 +739,13 @@ summary:focus-visible,
   background: #fafbfc;
 }
 
+.photo-upload-panel.image-paste-target:focus,
+.photo-upload-panel.image-paste-target:focus-within {
+  border-color: #7d8793;
+  outline: 2px solid #c5ccd4;
+  outline-offset: 1px;
+}
+
 .photo-input-preview {
   display: grid;
   width: 82px;
