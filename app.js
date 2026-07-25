@@ -26,6 +26,7 @@
 
   const IMAGE_FIELDS = [
     { path: "intro.coreConceptImage", label: "핵심 컨셉 이미지" },
+    { path: "features.whySpecialImage", label: "특별함 설명 이미지" },
     { path: "images.mainScreen", label: "메인 화면" },
     { path: "images.playScreen", label: "플레이 화면" },
     { path: "images.ui", label: "UI" },
@@ -42,7 +43,13 @@
       "target",
       "references",
     ],
-    features: ["whySpecial", "differentiationText", "differentiation", "playerExperience"],
+    features: [
+      "whySpecial",
+      "whySpecialImage",
+      "differentiationText",
+      "differentiation",
+      "playerExperience",
+    ],
     gameplay: ["flow", "coreSystems", "winLose", "growth"],
     images: ["mainScreen", "playScreen", "ui", "artConcept"],
     market: ["targetPlatform", "targetUsers", "postLaunch"],
@@ -184,6 +191,7 @@
       },
       features: {
         whySpecial: "",
+        whySpecialImage: "",
         differentiationText: "",
         comparisonGames: [firstGame],
         differentiation: [createEmptyComparisonRow([firstGame.id])],
@@ -266,6 +274,7 @@
       features: {
         whySpecial:
           "적과 싸우기보다 빛의 배치와 시야를 조작해 맵을 재구성하는 퍼즐 구조가 핵심입니다. 같은 공간도 빛의 위치에 따라 전혀 다른 경로가 됩니다.",
+        whySpecialImage: "",
         differentiationText:
           "일반적인 미로 탈출작·액션 어드벤처와 비교해, 맵 암기나 전투보다 빛 규칙을 발견하고 공간을 다시 디자인하는 플레이를 강조합니다.",
         comparisonGames: [mazeGame, actionGame],
@@ -714,6 +723,7 @@
 
   function getImageInputId(path) {
     if (path === "intro.coreConceptImage") return "image-core-concept";
+    if (path === "features.whySpecialImage") return "image-why-special";
     if (path === "images.mainScreen") return "image-main-screen";
     if (path === "images.playScreen") return "image-play-screen";
     if (path === "images.ui") return "image-ui";
@@ -1518,7 +1528,31 @@
     const list = createElement("div", "resume-entry-list");
     const features = state.concept.features;
 
-    appendTextEntry(list, "왜 이 게임이 특별한가", features.whySpecial);
+    const whyText = clean(features.whySpecial);
+    const whyImage = sanitizeImage(features.whySpecialImage);
+    if (whyText || whyImage) {
+      const entry = createElement("article", "resume-entry concept-entry");
+      const heading = createElement("h3", "entry-title");
+      heading.textContent = "왜 이 게임이 특별한가";
+      entry.append(heading);
+
+      if (whyText) {
+        const body = createElement("p", "entry-description");
+        body.textContent = whyText;
+        entry.append(body);
+      }
+
+      if (whyImage) {
+        const figure = createElement("figure", "concept-document-image");
+        const image = document.createElement("img");
+        image.src = whyImage;
+        image.alt = "왜 이 게임이 특별한가 설명 이미지";
+        figure.append(image);
+        entry.append(figure);
+      }
+
+      list.append(entry);
+    }
 
     const summary = clean(features.differentiationText);
     const comparisons = nonEmptyComparisons();
@@ -1690,6 +1724,9 @@
       if (sectionKey === "intro" && field === "coreConceptImage") {
         return Boolean(sanitizeImage(value));
       }
+      if (sectionKey === "features" && field === "whySpecialImage") {
+        return Boolean(sanitizeImage(value));
+      }
       if (sectionKey === "intro" && field === "references") {
         return nonEmptyReferences().length > 0;
       }
@@ -1778,6 +1815,7 @@
       intro: sanitizeIntro(source.intro, fallback.intro),
       features: {
         whySpecial: coerceText(source.features?.whySpecial),
+        whySpecialImage: sanitizeImage(source.features?.whySpecialImage),
         differentiationText: sanitizeDifferentiationText(source.features),
         playerExperience: coerceText(source.features?.playerExperience),
         ...sanitizeComparisonBlock(source.features),

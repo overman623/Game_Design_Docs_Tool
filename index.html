@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260725-9" />
-    <script src="vendor/pptxgen.bundle.js?v=20260725-9" defer></script>
-    <script src="app.js?v=20260725-9" defer></script>
-    <script src="export.js?v=20260725-9" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260725-10" />
+    <script src="vendor/pptxgen.bundle.js?v=20260725-10" defer></script>
+    <script src="app.js?v=20260725-10" defer></script>
+    <script src="export.js?v=20260725-10" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -358,6 +358,46 @@
                   data-field="features.whySpecial"
                   placeholder="이 게임만의 특별한 지점을 적어 주세요."
                 ></textarea>
+              </div>
+              <div class="field">
+                <div class="photo-upload-panel concept-image-panel">
+                  <div
+                    class="photo-input-preview concept-image-preview"
+                    data-image-preview="features.whySpecialImage"
+                  >
+                    <span>이미지 없음</span>
+                  </div>
+                  <div class="photo-upload-copy">
+                    <strong>특별함 설명 이미지</strong>
+                    <p>이 게임이 특별한 이유를 보여주는 이미지, 다이어그램, 레퍼런스를 선택적으로 넣어 주세요.</p>
+                    <div class="photo-actions">
+                      <label
+                        class="button button-secondary photo-upload-button"
+                        for="image-why-special"
+                      >
+                        이미지 선택
+                      </label>
+                      <input
+                        id="image-why-special"
+                        class="visually-hidden"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        data-image-field="features.whySpecialImage"
+                      />
+                      <button
+                        class="button button-delete"
+                        type="button"
+                        data-action="remove-image"
+                        data-image-field="features.whySpecialImage"
+                      >
+                        이미지 삭제
+                      </button>
+                    </div>
+                    <p class="field-help" data-image-status="features.whySpecialImage">
+                      JPG, PNG, WEBP / 8MB 이하 권장 · 선택 사항
+                    </p>
+                  </div>
+                </div>
               </div>
               <div class="field">
                 <label for="feature-diff-text">다른 게임과 차별점</label>
