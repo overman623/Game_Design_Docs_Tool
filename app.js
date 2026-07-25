@@ -40,6 +40,7 @@
       "genre",
       "platform",
       "target",
+      "references",
     ],
     features: ["whySpecial", "differentiationText", "differentiation", "playerExperience"],
     gameplay: ["flow", "coreSystems", "winLose", "growth"],
@@ -79,6 +80,7 @@
     form: document.querySelector("#document-form"),
     comparisonHead: document.querySelector("#comparison-head"),
     comparisonRows: document.querySelector("#comparison-rows"),
+    referenceItems: document.querySelector("#reference-items"),
     previewScroll: document.querySelector(".preview-scroll"),
     preview: document.querySelector("#document-preview"),
     pageCount: document.querySelector("#page-count"),
@@ -101,6 +103,14 @@
       return `${prefix}-${crypto.randomUUID()}`;
     }
     return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  function createEmptyReference() {
+    return {
+      id: createId("reference"),
+      name: "",
+      image: "",
+    };
   }
 
   function createEmptyComparisonGame(name = "") {
@@ -170,6 +180,7 @@
         genre: "",
         platform: "",
         target: "",
+        references: [createEmptyReference()],
       },
       features: {
         whySpecial: "",
@@ -239,6 +250,18 @@
         genre: "퍼즐 어드벤처",
         platform: "PC · 모바일",
         target: "캐주얼·인디 게임을 좋아하는 10~30대",
+        references: [
+          {
+            id: createId("reference"),
+            name: "Monument Valley",
+            image: "",
+          },
+          {
+            id: createId("reference"),
+            name: "Ori and the Blind Forest",
+            image: "",
+          },
+        ],
       },
       features: {
         whySpecial:
@@ -357,11 +380,18 @@
       return;
     }
 
+    if (target.matches("[data-reference-image]") && target.type === "file") {
+      handleReferenceImageUpload(target);
+      return;
+    }
+
     if (target.matches("[data-field]")) {
       setPath(state.concept, target.dataset.field, target.value);
       if (target.dataset.field === "intro.name") {
         renderComparisonTable();
       }
+    } else if (target.matches("[data-reference-field]")) {
+      updateReferenceItem(target);
     } else if (target.matches("[data-comparison-field]")) {
       updateComparisonRow(target);
     } else if (target.matches("[data-comparison-game-name]")) {
@@ -378,6 +408,14 @@
 
     renderPreview();
     scheduleSave();
+  }
+
+  function updateReferenceItem(input) {
+    const item = state.concept.intro.references.find(
+      (reference) => reference.id === input.dataset.itemId,
+    );
+    if (!item) return;
+    item[input.dataset.referenceField] = input.value;
   }
 
   function updateComparisonRow(input) {
@@ -411,6 +449,35 @@
     if (!button) return;
 
     const action = button.dataset.action;
+
+    if (action === "add-reference") {
+      state.concept.intro.references.push(createEmptyReference());
+      renderReferenceItems();
+      focusLatestReferenceItem();
+    }
+
+    if (action === "remove-reference") {
+      const rows = state.concept.intro.references;
+      if (rows.length <= 1) {
+        rows[0] = createEmptyReference();
+      } else {
+        state.concept.intro.references = rows.filter(
+          (item) => item.id !== button.dataset.itemId,
+        );
+      }
+      renderReferenceItems();
+    }
+
+    if (action === "remove-reference-image") {
+      const item = state.concept.intro.references.find(
+        (reference) => reference.id === button.dataset.itemId,
+      );
+      if (item) {
+        item.image = "";
+        renderReferenceImagePreview(item.id);
+        setReferenceImageStatus(item.id, "이미지를 삭제했어요.");
+      }
+    }
 
     if (action === "add-comparison") {
       state.concept.features.differentiation.push(createEmptyComparisonRow());
@@ -503,6 +570,53 @@
       console.warn("이미지를 처리하지 못했습니다.", error);
       input.value = "";
       setImageStatus(path, "이미지를 불러오지 못했어요. 다른 파일을 선택해 주세요.", true);
+    }
+  }
+
+  async function handleReferenceImageUpload(input) {
+    const item = state.concept.intro.references.find(
+      (reference) => reference.id === input.dataset.itemId,
+    );
+    const file = input.files?.[0];
+    if (!item || !file) return;
+
+    if (!file.type.startsWith("image/")) {
+      input.value = "";
+      setReferenceImageStatus(
+        item.id,
+        "JPG, PNG, WEBP 이미지 파일을 선택해 주세요.",
+        true,
+      );
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      input.value = "";
+      setReferenceImageStatus(
+        item.id,
+        "이미지는 8MB 이하 파일로 선택해 주세요.",
+        true,
+      );
+      return;
+    }
+
+    setReferenceImageStatus(item.id, "이미지를 16:9 비율로 정리하고 있어요.");
+
+    try {
+      const source = await readFileAsDataUrl(file);
+      item.image = await resizeConceptImage(source);
+      renderReferenceImagePreview(item.id);
+      renderPreview();
+      scheduleSave();
+      setReferenceImageStatus(item.id, "이미지를 저장했어요.");
+    } catch (error) {
+      console.warn("레퍼런스 이미지를 처리하지 못했습니다.", error);
+      input.value = "";
+      setReferenceImageStatus(
+        item.id,
+        "이미지를 불러오지 못했어요. 다른 파일을 선택해 주세요.",
+        true,
+      );
     }
   }
 
@@ -635,8 +749,160 @@
     });
 
     renderAllImagePreviews();
+    renderReferenceItems();
     renderComparisonTable();
     renderSectionOrderControls();
+  }
+
+  function renderReferenceItems() {
+    if (!dom.referenceItems) return;
+
+    const references = state.concept.intro.references || [];
+    dom.referenceItems.replaceChildren(
+      ...references.map((item, index) => createReferenceInputItem(item, index)),
+    );
+  }
+
+  function createReferenceInputItem(item, index) {
+    const wrapper = createElement("article", "repeat-item reference-item");
+    wrapper.dataset.itemId = item.id;
+
+    const header = createElement("div", "repeat-item-header");
+    const title = document.createElement("h3");
+    title.textContent = `레퍼런스 게임 ${index + 1}`;
+    const removeButton = createElement("button", "button button-delete");
+    removeButton.type = "button";
+    removeButton.dataset.action = "remove-reference";
+    removeButton.dataset.itemId = item.id;
+    removeButton.textContent = "삭제";
+    header.append(title, removeButton);
+
+    const nameField = createElement("div", "field");
+    const nameLabel = document.createElement("label");
+    const nameInputId = `reference-name-${item.id}`;
+    nameLabel.htmlFor = nameInputId;
+    nameLabel.textContent = "게임 이름";
+    const nameInput = document.createElement("input");
+    nameInput.id = nameInputId;
+    nameInput.type = "text";
+    nameInput.value = item.name || "";
+    nameInput.placeholder = "예: Monument Valley";
+    nameInput.dataset.referenceField = "name";
+    nameInput.dataset.itemId = item.id;
+    nameField.append(nameLabel, nameInput);
+
+    const imagePanel = createElement("div", "photo-upload-panel concept-image-panel");
+    const preview = createElement(
+      "div",
+      "photo-input-preview concept-image-preview",
+    );
+    preview.dataset.referenceImagePreview = item.id;
+    const imageSource = sanitizeImage(item.image);
+    if (imageSource) {
+      const image = document.createElement("img");
+      image.src = imageSource;
+      image.alt = `${clean(item.name) || "레퍼런스 게임"} 이미지`;
+      preview.append(image);
+    } else {
+      const emptyText = document.createElement("span");
+      emptyText.textContent = "이미지 없음";
+      preview.append(emptyText);
+    }
+
+    const copy = createElement("div", "photo-upload-copy");
+    const strong = document.createElement("strong");
+    strong.textContent = "이미지 (선택)";
+    const description = document.createElement("p");
+    description.textContent =
+      "대표 화면이나 키비주얼이 있으면 넣어 주세요. 없어도 괜찮아요.";
+    const actions = createElement("div", "photo-actions");
+    const uploadId = `reference-image-${item.id}`;
+    const uploadLabel = createElement(
+      "label",
+      "button button-secondary photo-upload-button",
+    );
+    uploadLabel.htmlFor = uploadId;
+    uploadLabel.textContent = imageSource ? "이미지 변경" : "이미지 선택";
+    uploadLabel.dataset.referenceImageLabel = item.id;
+
+    const fileInput = document.createElement("input");
+    fileInput.id = uploadId;
+    fileInput.className = "visually-hidden";
+    fileInput.type = "file";
+    fileInput.accept = "image/png,image/jpeg,image/webp";
+    fileInput.dataset.referenceImage = "";
+    fileInput.dataset.itemId = item.id;
+
+    const removeImageButton = createElement("button", "button button-delete");
+    removeImageButton.type = "button";
+    removeImageButton.dataset.action = "remove-reference-image";
+    removeImageButton.dataset.itemId = item.id;
+    removeImageButton.textContent = "이미지 삭제";
+    removeImageButton.disabled = !imageSource;
+
+    const status = createElement("p", "field-help");
+    status.dataset.referenceImageStatus = item.id;
+    status.textContent = "JPG, PNG, WEBP / 8MB 이하 권장 · 선택 사항";
+
+    actions.append(uploadLabel, fileInput, removeImageButton);
+    copy.append(strong, description, actions, status);
+    imagePanel.append(preview, copy);
+
+    wrapper.append(header, nameField, imagePanel);
+    return wrapper;
+  }
+
+  function renderReferenceImagePreview(itemId) {
+    const item = state.concept.intro.references.find(
+      (reference) => reference.id === itemId,
+    );
+    const preview = dom.referenceItems?.querySelector(
+      `[data-reference-image-preview="${itemId}"]`,
+    );
+    const removeButton = dom.referenceItems?.querySelector(
+      `[data-action="remove-reference-image"][data-item-id="${itemId}"]`,
+    );
+    const uploadLabel = dom.referenceItems?.querySelector(
+      `[data-reference-image-label="${itemId}"]`,
+    );
+    if (!item || !preview) return;
+
+    const imageSource = sanitizeImage(item.image);
+    preview.replaceChildren();
+
+    if (imageSource) {
+      const image = document.createElement("img");
+      image.src = imageSource;
+      image.alt = `${clean(item.name) || "레퍼런스 게임"} 이미지`;
+      preview.append(image);
+    } else {
+      const emptyText = document.createElement("span");
+      emptyText.textContent = "이미지 없음";
+      preview.append(emptyText);
+    }
+
+    if (removeButton) removeButton.disabled = !imageSource;
+    if (uploadLabel) {
+      uploadLabel.textContent = imageSource ? "이미지 변경" : "이미지 선택";
+    }
+  }
+
+  function setReferenceImageStatus(itemId, message, isError = false) {
+    const status = dom.referenceItems?.querySelector(
+      `[data-reference-image-status="${itemId}"]`,
+    );
+    if (!status) return;
+    status.textContent = message;
+    status.dataset.state = isError ? "error" : "normal";
+  }
+
+  function focusLatestReferenceItem() {
+    requestAnimationFrame(() => {
+      const lastInput = dom.referenceItems?.querySelector(
+        ".reference-item:last-child input[type='text']",
+      );
+      lastInput?.focus();
+    });
   }
 
   function renderComparisonTable() {
@@ -1184,8 +1450,45 @@
     appendTextEntry(list, "플랫폼", intro.platform);
     appendTextEntry(list, "타겟", intro.target);
 
+    const references = nonEmptyReferences();
+    if (references.length > 0) {
+      const entry = createElement("article", "resume-entry concept-entry");
+      const heading = createElement("h3", "entry-title");
+      heading.textContent = "레퍼런스 게임";
+      entry.append(heading);
+
+      const referenceList = createElement("div", "reference-document-list");
+      references.forEach((item) => {
+        const card = createElement("article", "reference-document-item");
+        const name = createElement("p", "entry-description reference-document-name");
+        name.textContent = clean(item.name);
+        card.append(name);
+
+        const imageSource = sanitizeImage(item.image);
+        if (imageSource) {
+          const figure = createElement("figure", "concept-document-image");
+          const image = document.createElement("img");
+          image.src = imageSource;
+          image.alt = `${clean(item.name)} 레퍼런스 이미지`;
+          figure.append(image);
+          card.append(figure);
+        }
+
+        referenceList.append(card);
+      });
+
+      entry.append(referenceList);
+      list.append(entry);
+    }
+
     section.append(list);
     return section;
+  }
+
+  function nonEmptyReferences() {
+    return (state.concept.intro.references || []).filter(
+      (item) => clean(item.name) || sanitizeImage(item.image),
+    );
   }
 
   function createTextSection(titleText, sectionKey, sectionNumber, fields) {
@@ -1387,6 +1690,9 @@
       if (sectionKey === "intro" && field === "coreConceptImage") {
         return Boolean(sanitizeImage(value));
       }
+      if (sectionKey === "intro" && field === "references") {
+        return nonEmptyReferences().length > 0;
+      }
       if (sectionKey === "features" && field === "differentiation") {
         return nonEmptyComparisons().length > 0;
       }
@@ -1493,8 +1799,17 @@
   }
 
   function sanitizeIntro(source, fallback) {
-    const intro = sanitizeTextObject(source, fallback);
+    const intro = sanitizeTextObject(source, {
+      name: fallback.name,
+      oneLiner: fallback.oneLiner,
+      coreConcept: fallback.coreConcept,
+      coreConceptImage: "",
+      genre: fallback.genre,
+      platform: fallback.platform,
+      target: fallback.target,
+    });
     intro.coreConceptImage = sanitizeImage(source?.coreConceptImage);
+    intro.references = sanitizeReferences(source?.references);
     if (
       !clean(intro.genre) &&
       !clean(intro.platform) &&
@@ -1511,6 +1826,23 @@
       }
     }
     return intro;
+  }
+
+  function sanitizeReferences(source) {
+    if (!Array.isArray(source)) return [createEmptyReference()];
+
+    const rows = source
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        return {
+          id: coerceText(item.id) || createId("reference"),
+          name: coerceText(item.name),
+          image: sanitizeImage(item.image),
+        };
+      })
+      .filter(Boolean);
+
+    return rows.length ? rows : [createEmptyReference()];
   }
 
   function sanitizeDifferentiationText(features) {

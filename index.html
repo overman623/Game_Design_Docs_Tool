@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260725-8" />
-    <script src="vendor/pptxgen.bundle.js?v=20260725-8" defer></script>
-    <script src="app.js?v=20260725-8" defer></script>
-    <script src="export.js?v=20260725-8" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260725-9" />
+    <script src="vendor/pptxgen.bundle.js?v=20260725-9" defer></script>
+    <script src="app.js?v=20260725-9" defer></script>
+    <script src="export.js?v=20260725-9" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -322,6 +322,21 @@
                     placeholder="예: 캐주얼·인디 게임을 좋아하는 10~30대"
                   />
                 </div>
+              </div>
+
+              <div class="field reference-field">
+                <label>레퍼런스 게임</label>
+                <p class="field-help">
+                  참고한 게임을 적어 주세요. 이미지는 선택 사항입니다.
+                </p>
+                <div id="reference-items" class="repeat-list"></div>
+                <button
+                  class="button button-add"
+                  type="button"
+                  data-action="add-reference"
+                >
+                  레퍼런스 게임 추가
+                </button>
               </div>
             </div>
           </details>

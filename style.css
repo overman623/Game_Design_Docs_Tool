@@ -604,6 +604,25 @@ summary:focus-visible,
   margin: 0 0 10px;
 }
 
+.reference-field > .field-help {
+  margin: 0 0 10px;
+}
+
+.reference-item .photo-upload-panel {
+  margin-top: 10px;
+}
+
+.reference-document-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.reference-document-name {
+  margin: 0;
+  font-weight: 700;
+}
+
 .comparison-toolbar {
   display: flex;
   flex-wrap: wrap;
