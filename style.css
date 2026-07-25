@@ -561,6 +561,45 @@ summary:focus-visible,
   background: #f4f6f8;
 }
 
+.concept-image-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.concept-image-panel .concept-image-preview {
+  width: 120px;
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+
+.concept-image-panel .concept-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.concept-identity {
+  margin-top: 14px;
+}
+
+.concept-document-image {
+  margin: 8px 0 0;
+  overflow: hidden;
+  border: 1px solid #d8dde3;
+  border-radius: 4px;
+  background: #f4f6f8;
+}
+
+.concept-document-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.concept-entry .entry-title {
+  margin-bottom: 6px;
+}
+
 .photo-upload-panel {
   display: grid;
   grid-template-columns: 92px minmax(0, 1fr);
@@ -722,6 +761,10 @@ summary:focus-visible,
 
 .visibility-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.concept-image-panel {
+  grid-template-columns: 120px minmax(0, 1fr);
 }
 
 .repeat-list {
@@ -1844,7 +1887,8 @@ summary:focus-visible,
   .field-grid.two-columns,
   .checkbox-grid,
   .visibility-grid,
-  .essay-add-panel {
+  .essay-add-panel,
+  .concept-image-panel {
     grid-template-columns: 1fr;
   }
 

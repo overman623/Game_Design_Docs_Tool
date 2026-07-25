@@ -29,9 +29,9 @@
         height: PPTX_PAGE_HEIGHT,
       });
       pptx.layout = "A4";
-      pptx.author = "나의 취업 서류 만들기";
-      pptx.company = "Job Document Builder";
-      pptx.subject = "취업 제출 문서";
+      pptx.author = "게임 컨셉 기획서 만들기";
+      pptx.company = "Game Concept Document Builder";
+      pptx.subject = "게임 컨셉 기획서";
       pptx.title = title;
       pptx.lang = "ko-KR";
 
@@ -413,7 +413,7 @@
       ` width="${round(width)}" height="${round(height)}"`,
       ` viewBox="0 0 ${round(width)} ${round(height)}">`,
       `<title>${escapeXml(getDocumentName())} · Figma 편집용</title>`,
-      `<metadata>A4 pages exported from Job Document Builder</metadata>`,
+      `<metadata>A4 pages exported from Game Concept Document Builder</metadata>`,
       groups.join(""),
       `</svg>`,
     ].join("");
@@ -613,7 +613,7 @@
   }
 
   function getDocumentName() {
-    return document.querySelector(".document-title")?.textContent?.trim() || "취업-서류";
+    return document.querySelector(".document-title")?.textContent?.trim() || "게임-컨셉-기획서";
   }
 
   function safeFileName(value) {
@@ -622,7 +622,7 @@
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "")
-      .slice(0, 80) || "취업-서류";
+      .slice(0, 80) || "게임-컨셉-기획서";
   }
 
   function escapeXml(value) {
