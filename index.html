@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260726-06" />
-    <script src="vendor/pptxgen.bundle.js?v=20260726-06" defer></script>
-    <script src="app.js?v=20260726-06" defer></script>
-    <script src="export.js?v=20260726-06" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260726-07" />
+    <script src="vendor/pptxgen.bundle.js?v=20260726-07" defer></script>
+    <script src="app.js?v=20260726-07" defer></script>
+    <script src="export.js?v=20260726-07" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -290,45 +290,23 @@
                   placeholder="이 게임이 무엇을 하는 게임인지, 핵심 재미가 무엇인지 적어 주세요."
                 ></textarea>
               </div>
-              <div class="field">
-                <div class="photo-upload-panel concept-image-panel">
-                  <div
-                    class="photo-input-preview concept-image-preview"
-                    data-image-preview="intro.coreConceptImage"
-                  >
-                    <span>이미지 없음</span>
-                  </div>
-                  <div class="photo-upload-copy">
-                    <strong>핵심 컨셉 이미지</strong>
-                    <p>핵심 컨셉을 설명하는 다이어그램, 키비주얼, 레퍼런스 이미지를 넣어 주세요.</p>
-                    <div class="photo-actions">
-                      <label
-                        class="button button-secondary photo-upload-button"
-                        for="image-core-concept"
-                      >
-                        이미지 선택
-                      </label>
-                      <input
-                        id="image-core-concept"
-                        class="visually-hidden"
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        data-image-field="intro.coreConceptImage"
-                      />
-                      <button
-                        class="button button-delete"
-                        type="button"
-                        data-action="remove-image"
-                        data-image-field="intro.coreConceptImage"
-                      >
-                        이미지 삭제
-                      </button>
-                    </div>
-                    <p class="field-help" data-image-status="intro.coreConceptImage">
-                      JPG, PNG, WEBP / 8MB 이하 · 선택 또는 Ctrl+V 붙여넣기
-                    </p>
-                  </div>
-                </div>
+              <div class="field core-concept-images-field">
+                <label>핵심 컨셉 이미지</label>
+                <p class="field-help">
+                  핵심 컨셉을 설명하는 이미지를 최대 3장까지 넣을 수 있어요.
+                  선택 또는 Ctrl+V 붙여넣기가 가능합니다.
+                </p>
+                <div
+                  id="core-concept-image-items"
+                  class="repeat-list core-concept-image-list"
+                ></div>
+                <button
+                  class="button button-add"
+                  type="button"
+                  data-action="add-core-concept-image"
+                >
+                  이미지 추가
+                </button>
               </div>
               <div class="field-grid two-columns">
                 <div class="field">

@@ -26,8 +26,9 @@
     { key: "episode", label: "개발 과정 에피소드" },
   ];
 
+  const MAX_CORE_CONCEPT_IMAGES = 3;
+
   const IMAGE_FIELDS = [
-    { path: "intro.coreConceptImage", label: "핵심 컨셉 이미지", inputId: "image-core-concept" },
     { path: "features.whySpecialImage", label: "특별함 설명 이미지", inputId: "image-why-special" },
     {
       path: "features.playerExperienceImage",
@@ -52,7 +53,7 @@
       "name",
       "oneLiner",
       "coreConcept",
-      "coreConceptImage",
+      "coreConceptImages",
       "genre",
       "platform",
       "target",
@@ -114,6 +115,10 @@
     comparisonHead: document.querySelector("#comparison-head"),
     comparisonRows: document.querySelector("#comparison-rows"),
     referenceItems: document.querySelector("#reference-items"),
+    coreConceptImageItems: document.querySelector("#core-concept-image-items"),
+    addCoreConceptImageButton: document.querySelector(
+      '[data-action="add-core-concept-image"]',
+    ),
     artColorItems: document.querySelector("#art-color-items"),
     previewScroll: document.querySelector(".preview-scroll"),
     preview: document.querySelector("#document-preview"),
@@ -146,6 +151,19 @@
       name: "",
       image: "",
     };
+  }
+
+  function createEmptyCoreConceptImage() {
+    return {
+      id: createId("core-image"),
+      image: "",
+    };
+  }
+
+  function ensureCoreConceptImages() {
+    if (!Array.isArray(state.concept.intro.coreConceptImages)) {
+      state.concept.intro.coreConceptImages = [];
+    }
   }
 
   function createEmptyArtColor(hex = "#808080", name = "") {
@@ -221,7 +239,7 @@
         name: "",
         oneLiner: "",
         coreConcept: "",
-        coreConceptImage: "",
+        coreConceptImages: [],
         genre: "",
         platform: "",
         target: "",
@@ -301,7 +319,7 @@
         oneLiner: "빛을 모아 미로를 밝히는 2D 퍼즐 어드벤처",
         coreConcept:
           "플레이어는 어둠 속 미로에서 빛 조각을 수집하고, 그 빛으로 길을 열며 숨겨진 공간을 탐험합니다. 전투보다 ‘공간을 해석하는 재미’가 중심입니다.",
-        coreConceptImage: "",
+        coreConceptImages: [],
         genre: "퍼즐 어드벤처",
         platform: "PC · 모바일",
         target: "캐주얼·인디 게임을 좋아하는 10~30대",
@@ -586,6 +604,13 @@
       return;
     }
 
+    if (target.kind === "coreConcept") {
+      void applyCoreConceptImageFromFile(target.itemId, imageFile, {
+        successMessage: "붙여넣은 이미지를 저장했어요.",
+      });
+      return;
+    }
+
     if (target.kind === "reference") {
       void applyReferenceImageFromFile(target.itemId, imageFile, {
         successMessage: "붙여넣은 이미지를 저장했어요.",
@@ -620,6 +645,12 @@
       panel.querySelector("[data-image-preview]")?.dataset.imagePreview;
     if (conceptField) return { kind: "concept", path: conceptField };
 
+    const coreConceptId =
+      panel.querySelector("input[data-core-concept-image]")?.dataset.itemId ||
+      panel.querySelector("[data-core-concept-image-preview]")
+        ?.dataset.coreConceptImagePreview;
+    if (coreConceptId) return { kind: "coreConcept", itemId: coreConceptId };
+
     const referenceId =
       panel.querySelector("input[data-reference-image]")?.dataset.itemId ||
       panel.querySelector("[data-reference-image-preview]")
@@ -645,6 +676,11 @@
 
     if (target.matches("[data-image-field]") && target.type === "file") {
       handleConceptImageUpload(target);
+      return;
+    }
+
+    if (target.matches("[data-core-concept-image]") && target.type === "file") {
+      handleCoreConceptImageUpload(target);
       return;
     }
 
@@ -748,6 +784,37 @@
     if (!button) return;
 
     const action = button.dataset.action;
+
+    if (action === "add-core-concept-image") {
+      ensureCoreConceptImages();
+      if (state.concept.intro.coreConceptImages.length >= MAX_CORE_CONCEPT_IMAGES) {
+        return;
+      }
+      state.concept.intro.coreConceptImages.push(createEmptyCoreConceptImage());
+      renderCoreConceptImageItems();
+      prepareImagePasteTargets();
+    }
+
+    if (action === "remove-core-concept-image") {
+      ensureCoreConceptImages();
+      state.concept.intro.coreConceptImages =
+        state.concept.intro.coreConceptImages.filter(
+          (item) => item.id !== button.dataset.itemId,
+        );
+      renderCoreConceptImageItems();
+      prepareImagePasteTargets();
+    }
+
+    if (action === "remove-core-concept-image-file") {
+      const item = (state.concept.intro.coreConceptImages || []).find(
+        (entry) => entry.id === button.dataset.itemId,
+      );
+      if (item) {
+        item.image = "";
+        renderCoreConceptImagePreview(item.id);
+        setCoreConceptImageStatus(item.id, "이미지를 삭제했어요.");
+      }
+    }
 
     if (action === "add-reference") {
       state.concept.intro.references.push(createEmptyReference());
@@ -863,6 +930,60 @@
 
     const saved = await applyConceptImageFromFile(path, file);
     if (!saved) input.value = "";
+  }
+
+  async function handleCoreConceptImageUpload(input) {
+    const itemId = input.dataset.itemId;
+    const file = input.files?.[0];
+    if (!itemId || !file) return;
+
+    const saved = await applyCoreConceptImageFromFile(itemId, file);
+    if (!saved) input.value = "";
+  }
+
+  async function applyCoreConceptImageFromFile(itemId, file, options = {}) {
+    ensureCoreConceptImages();
+    const item = state.concept.intro.coreConceptImages.find(
+      (entry) => entry.id === itemId,
+    );
+    if (!item) return false;
+
+    if (!file.type.startsWith("image/")) {
+      setCoreConceptImageStatus(
+        itemId,
+        "JPG, PNG, WEBP 이미지를 선택하거나 붙여넣어 주세요.",
+        true,
+      );
+      return false;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      setCoreConceptImageStatus(itemId, "이미지는 8MB 이하로 넣어 주세요.", true);
+      return false;
+    }
+
+    setCoreConceptImageStatus(itemId, getImageProcessingMessage());
+
+    try {
+      const source = await readFileAsDataUrl(file);
+      item.image = await resizeConceptImage(source);
+      renderCoreConceptImagePreview(itemId);
+      renderPreview();
+      scheduleSave();
+      setCoreConceptImageStatus(
+        itemId,
+        options.successMessage || "이미지를 저장했어요.",
+      );
+      return true;
+    } catch (error) {
+      console.warn("핵심 컨셉 이미지를 처리하지 못했습니다.", error);
+      setCoreConceptImageStatus(
+        itemId,
+        "이미지를 불러오지 못했어요. 다른 이미지나 파일을 넣어 주세요.",
+        true,
+      );
+      return false;
+    }
   }
 
   async function applyConceptImageFromFile(path, file, options = {}) {
@@ -1123,10 +1244,156 @@
 
     syncImageFitClass();
     renderAllImagePreviews();
+    renderCoreConceptImageItems();
     renderReferenceItems();
     renderArtColorItems();
     renderComparisonTable();
     renderSectionOrderControls();
+  }
+
+  function renderCoreConceptImageItems() {
+    if (!dom.coreConceptImageItems) return;
+
+    ensureCoreConceptImages();
+    const items = state.concept.intro.coreConceptImages;
+    dom.coreConceptImageItems.replaceChildren(
+      ...items.map((item, index) => createCoreConceptImageInputItem(item, index)),
+    );
+
+    if (dom.addCoreConceptImageButton) {
+      dom.addCoreConceptImageButton.disabled =
+        items.length >= MAX_CORE_CONCEPT_IMAGES;
+      dom.addCoreConceptImageButton.textContent =
+        items.length >= MAX_CORE_CONCEPT_IMAGES
+          ? "이미지 3장까지 추가됨"
+          : "이미지 추가";
+    }
+
+    prepareImagePasteTargets();
+  }
+
+  function createCoreConceptImageInputItem(item, index) {
+    const wrapper = createElement("article", "repeat-item core-concept-image-item");
+    wrapper.dataset.itemId = item.id;
+
+    const header = createElement("div", "repeat-item-header");
+    const title = document.createElement("h3");
+    title.textContent = `핵심 컨셉 이미지 ${index + 1}`;
+    const removeButton = createElement("button", "button button-delete");
+    removeButton.type = "button";
+    removeButton.dataset.action = "remove-core-concept-image";
+    removeButton.dataset.itemId = item.id;
+    removeButton.textContent = "삭제";
+    header.append(title, removeButton);
+
+    const imagePanel = createElement("div", "photo-upload-panel concept-image-panel");
+    const preview = createElement(
+      "div",
+      "photo-input-preview concept-image-preview",
+    );
+    preview.dataset.coreConceptImagePreview = item.id;
+    const imageSource = sanitizeImage(item.image);
+    if (imageSource) {
+      const image = document.createElement("img");
+      image.src = imageSource;
+      image.alt = `핵심 컨셉 이미지 ${index + 1}`;
+      preview.append(image);
+    } else {
+      const emptyText = document.createElement("span");
+      emptyText.textContent = "이미지 없음";
+      preview.append(emptyText);
+    }
+
+    const copy = createElement("div", "photo-upload-copy");
+    const strong = document.createElement("strong");
+    strong.textContent = "이미지 파일";
+    const description = document.createElement("p");
+    description.textContent =
+      "다이어그램, 키비주얼, 레퍼런스 컷을 넣어 주세요.";
+    const actions = createElement("div", "photo-actions");
+    const uploadId = `core-concept-image-${item.id}`;
+    const uploadLabel = createElement(
+      "label",
+      "button button-secondary photo-upload-button",
+    );
+    uploadLabel.htmlFor = uploadId;
+    uploadLabel.textContent = imageSource ? "이미지 변경" : "이미지 선택";
+    uploadLabel.dataset.coreConceptImageLabel = item.id;
+
+    const fileInput = document.createElement("input");
+    fileInput.id = uploadId;
+    fileInput.className = "visually-hidden";
+    fileInput.type = "file";
+    fileInput.accept = "image/png,image/jpeg,image/webp";
+    fileInput.dataset.coreConceptImage = "";
+    fileInput.dataset.itemId = item.id;
+
+    const removeImageButton = createElement("button", "button button-delete");
+    removeImageButton.type = "button";
+    removeImageButton.dataset.action = "remove-core-concept-image-file";
+    removeImageButton.dataset.itemId = item.id;
+    removeImageButton.textContent = "이미지 비우기";
+    removeImageButton.disabled = !imageSource;
+
+    const status = createElement("p", "field-help");
+    status.dataset.coreConceptImageStatus = item.id;
+    status.textContent =
+      "JPG, PNG, WEBP / 8MB 이하 · 선택 또는 Ctrl+V 붙여넣기";
+
+    actions.append(uploadLabel, fileInput, removeImageButton);
+    copy.append(strong, description, actions, status);
+    imagePanel.append(preview, copy);
+    wrapper.append(header, imagePanel);
+    return wrapper;
+  }
+
+  function renderCoreConceptImagePreview(itemId) {
+    const item = (state.concept.intro.coreConceptImages || []).find(
+      (entry) => entry.id === itemId,
+    );
+    const preview = dom.coreConceptImageItems?.querySelector(
+      `[data-core-concept-image-preview="${itemId}"]`,
+    );
+    const removeButton = dom.coreConceptImageItems?.querySelector(
+      `[data-action="remove-core-concept-image-file"][data-item-id="${itemId}"]`,
+    );
+    const uploadLabel = dom.coreConceptImageItems?.querySelector(
+      `[data-core-concept-image-label="${itemId}"]`,
+    );
+    if (!item || !preview) return;
+
+    const imageSource = sanitizeImage(item.image);
+    preview.replaceChildren();
+    if (imageSource) {
+      const image = document.createElement("img");
+      image.src = imageSource;
+      image.alt = "핵심 컨셉 이미지 미리보기";
+      preview.append(image);
+    } else {
+      const emptyText = document.createElement("span");
+      emptyText.textContent = "이미지 없음";
+      preview.append(emptyText);
+    }
+
+    if (removeButton) removeButton.disabled = !imageSource;
+    if (uploadLabel) {
+      uploadLabel.textContent = imageSource ? "이미지 변경" : "이미지 선택";
+    }
+  }
+
+  function setCoreConceptImageStatus(itemId, message, isError = false) {
+    const status = dom.coreConceptImageItems?.querySelector(
+      `[data-core-concept-image-status="${itemId}"]`,
+    );
+    if (!status) return;
+    status.textContent = message;
+    status.dataset.state = isError ? "error" : "normal";
+  }
+
+  function nonEmptyCoreConceptImages() {
+    return (state.concept.intro.coreConceptImages || []).filter((item) =>
+      Boolean(sanitizeImage(item?.image)),
+    );
   }
 
   function renderReferenceItems() {
@@ -1988,8 +2255,8 @@
     }
 
     const conceptText = clean(intro.coreConcept);
-    const conceptImage = sanitizeImage(intro.coreConceptImage);
-    if (conceptText || conceptImage) {
+    const conceptImages = nonEmptyCoreConceptImages();
+    if (conceptText || conceptImages.length > 0) {
       const entry = createElement("article", "resume-entry concept-entry");
       const heading = createElement("h3", "entry-title");
       heading.textContent = "게임의 핵심 컨셉";
@@ -2001,13 +2268,20 @@
         entry.append(body);
       }
 
-      if (conceptImage) {
-        const figure = createElement("figure", "concept-document-image");
-        const image = document.createElement("img");
-        image.src = conceptImage;
-        image.alt = "핵심 컨셉 이미지";
-        figure.append(image);
-        entry.append(figure);
+      if (conceptImages.length > 0) {
+        const gallery = createElement(
+          "div",
+          `concept-image-gallery count-${Math.min(3, conceptImages.length)}`,
+        );
+        conceptImages.forEach((item, index) => {
+          const figure = createElement("figure", "concept-document-image");
+          const image = document.createElement("img");
+          image.src = sanitizeImage(item.image);
+          image.alt = `핵심 컨셉 이미지 ${index + 1}`;
+          figure.append(image);
+          gallery.append(figure);
+        });
+        entry.append(gallery);
       }
 
       list.append(entry);
@@ -2560,6 +2834,9 @@
       ) {
         return Boolean(sanitizeImage(value));
       }
+      if (sectionKey === "intro" && field === "coreConceptImages") {
+        return nonEmptyCoreConceptImages().length > 0;
+      }
       if (sectionKey === "intro" && field === "references") {
         return nonEmptyReferences().length > 0;
       }
@@ -2717,12 +2994,14 @@
       name: fallback.name,
       oneLiner: fallback.oneLiner,
       coreConcept: fallback.coreConcept,
-      coreConceptImage: "",
       genre: fallback.genre,
       platform: fallback.platform,
       target: fallback.target,
     });
-    intro.coreConceptImage = sanitizeImage(source?.coreConceptImage);
+    intro.coreConceptImages = sanitizeCoreConceptImages(
+      source?.coreConceptImages,
+      source?.coreConceptImage,
+    );
     intro.references = sanitizeReferences(source?.references);
     if (
       !clean(intro.genre) &&
@@ -2740,6 +3019,32 @@
       }
     }
     return intro;
+  }
+
+  function sanitizeCoreConceptImages(source, legacyImage) {
+    const rows = [];
+
+    if (Array.isArray(source)) {
+      source.forEach((item) => {
+        if (!item || typeof item !== "object") return;
+        rows.push({
+          id: coerceText(item.id) || createId("core-image"),
+          image: sanitizeImage(item.image),
+        });
+      });
+    }
+
+    if (rows.length === 0) {
+      const legacy = sanitizeImage(legacyImage);
+      if (legacy) {
+        rows.push({
+          id: createId("core-image"),
+          image: legacy,
+        });
+      }
+    }
+
+    return rows.slice(0, MAX_CORE_CONCEPT_IMAGES);
   }
 
   function sanitizeReferences(source) {
@@ -3075,6 +3380,10 @@
     appendPromptField(introLines, "intro.name");
     appendPromptField(introLines, "intro.oneLiner");
     appendPromptField(introLines, "intro.coreConcept");
+    const coreConceptImageCount = nonEmptyCoreConceptImages().length;
+    if (coreConceptImageCount > 0) {
+      introLines.push(`- 핵심 컨셉 이미지: ${coreConceptImageCount}장`);
+    }
     appendPromptField(introLines, "intro.genre");
     appendPromptField(introLines, "intro.platform");
     appendPromptField(introLines, "intro.target");
