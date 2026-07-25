@@ -975,6 +975,97 @@ html[data-image-fit="cover1x1"] .photo-input-preview img {
   min-height: 76px;
 }
 
+.art-color-field > .field-help {
+  margin: 0 0 10px;
+}
+
+.art-color-controls {
+  display: grid;
+  grid-template-columns: 52px minmax(110px, 0.8fr) minmax(0, 1.4fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.art-color-controls input[type="color"] {
+  width: 52px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #d0d5db;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.art-color-hex-field input {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.art-palette-label {
+  margin: 12px 0 8px;
+  color: #5a636e;
+  font-size: 0.78em;
+  font-weight: 700;
+}
+
+.art-palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 10px;
+}
+
+.art-palette-swatch {
+  display: grid;
+  gap: 6px;
+}
+
+.art-palette-chip {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid #cfd5dc;
+  border-radius: 4px;
+}
+
+.art-palette-meta {
+  display: grid;
+  gap: 2px;
+}
+
+.art-palette-hex {
+  color: #3d454e;
+  font-size: 0.72em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.art-palette-name {
+  color: #68717b;
+  font-size: 0.7em;
+  line-height: 1.35;
+}
+
+.layout-slides .art-palette {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.layout-slides .art-palette-chip {
+  aspect-ratio: 1.2 / 1;
+}
+
+@media (max-width: 720px) {
+  .art-color-controls {
+    grid-template-columns: 52px 1fr;
+  }
+
+  .art-color-name-field {
+    grid-column: 1 / -1;
+  }
+}
+
 .contribution-grid {
   display: grid;
   gap: 10px;

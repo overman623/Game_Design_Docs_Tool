@@ -76,7 +76,7 @@
       "growth",
       "growthImage",
     ],
-    images: ["mainScreen", "playScreen", "ui", "artConcept"],
+    images: ["mainScreen", "playScreen", "ui", "artConcept", "artColors"],
     market: ["targetPlatform", "targetUsers", "postLaunch"],
     team: ["teamName", "members"],
     episode: ["motivation", "trials", "redesign", "futureGoals"],
@@ -97,6 +97,7 @@
     "gameplay.winLose": "승패 조건",
     "gameplay.growth": "성장 요소",
     "images.artConcept": "아트 컨셉",
+    "images.artColors": "아트 컬러",
     "market.targetPlatform": "목표 플랫폼",
     "market.targetUsers": "목표 유저",
     "market.postLaunch": "출시 이후 계획",
@@ -113,6 +114,7 @@
     comparisonHead: document.querySelector("#comparison-head"),
     comparisonRows: document.querySelector("#comparison-rows"),
     referenceItems: document.querySelector("#reference-items"),
+    artColorItems: document.querySelector("#art-color-items"),
     previewScroll: document.querySelector(".preview-scroll"),
     preview: document.querySelector("#document-preview"),
     pageCount: document.querySelector("#page-count"),
@@ -143,6 +145,14 @@
       id: createId("reference"),
       name: "",
       image: "",
+    };
+  }
+
+  function createEmptyArtColor(hex = "#808080", name = "") {
+    return {
+      id: createId("color"),
+      hex: normalizeHex(hex),
+      name,
     };
   }
 
@@ -240,6 +250,7 @@
         playScreen: "",
         ui: "",
         artConcept: "",
+        artColors: [],
       },
       market: {
         targetPlatform: "",
@@ -365,6 +376,12 @@
         ui: "",
         artConcept:
           "차분한 남색·청록 배경 위에 따뜻한 노란 빛이 대비되는 톤. 레퍼런스는 Monument Valley의 미니멀 공간감과 Ori의 빛 표현입니다.",
+        artColors: [
+          createEmptyArtColor("#1B2A4A", "미드나잇 네이비"),
+          createEmptyArtColor("#2F6F6A", "청록 안개"),
+          createEmptyArtColor("#F2C14E", "루멘 골드"),
+          createEmptyArtColor("#F4F1EA", "페이퍼 화이트"),
+        ],
       },
       market: {
         targetPlatform: "1차 Steam / 2차 Google Play·iOS",
@@ -542,6 +559,8 @@
       }
     } else if (target.matches("[data-reference-field]")) {
       updateReferenceItem(target);
+    } else if (target.matches("[data-art-color-field]")) {
+      updateArtColorItem(target);
     } else if (target.matches("[data-comparison-field]")) {
       updateComparisonRow(target);
     } else if (target.matches("[data-comparison-game-name]")) {
@@ -569,6 +588,32 @@
     );
     if (!item) return;
     item[input.dataset.referenceField] = input.value;
+  }
+
+  function updateArtColorItem(input) {
+    if (!Array.isArray(state.concept.images.artColors)) {
+      state.concept.images.artColors = [];
+    }
+
+    const item = state.concept.images.artColors.find(
+      (color) => color.id === input.dataset.itemId,
+    );
+    if (!item) return;
+
+    const field = input.dataset.artColorField;
+    if (field === "name") {
+      item.name = input.value;
+      return;
+    }
+
+    if (field === "hex") {
+      item.hex = normalizeHex(input.value);
+      const row = input.closest(".art-color-item");
+      const picker = row?.querySelector('input[type="color"]');
+      const hexInput = row?.querySelector('input[data-art-color-field="hex"]');
+      if (picker) picker.value = item.hex;
+      if (hexInput) hexInput.value = item.hex;
+    }
   }
 
   function updateComparisonRow(input) {
@@ -619,6 +664,23 @@
         );
       }
       renderReferenceItems();
+    }
+
+    if (action === "add-art-color") {
+      if (!Array.isArray(state.concept.images.artColors)) {
+        state.concept.images.artColors = [];
+      }
+      state.concept.images.artColors.push(createEmptyArtColor());
+      renderArtColorItems();
+      focusLatestArtColorItem();
+    }
+
+    if (action === "remove-art-color") {
+      const rows = state.concept.images.artColors || [];
+      state.concept.images.artColors = rows.filter(
+        (item) => item.id !== button.dataset.itemId,
+      );
+      renderArtColorItems();
     }
 
     if (action === "remove-reference-image") {
@@ -961,6 +1023,7 @@
     syncImageFitClass();
     renderAllImagePreviews();
     renderReferenceItems();
+    renderArtColorItems();
     renderComparisonTable();
     renderSectionOrderControls();
   }
@@ -1116,6 +1179,98 @@
       );
       lastInput?.focus();
     });
+  }
+
+  function renderArtColorItems() {
+    if (!dom.artColorItems) return;
+
+    const colors = state.concept.images.artColors || [];
+    dom.artColorItems.replaceChildren(
+      ...colors.map((item, index) => createArtColorInputItem(item, index)),
+    );
+  }
+
+  function createArtColorInputItem(item, index) {
+    const wrapper = createElement("article", "repeat-item art-color-item");
+    wrapper.dataset.itemId = item.id;
+
+    const header = createElement("div", "repeat-item-header");
+    const title = document.createElement("h3");
+    title.textContent = `색상 ${index + 1}`;
+    const removeButton = createElement("button", "button button-delete");
+    removeButton.type = "button";
+    removeButton.dataset.action = "remove-art-color";
+    removeButton.dataset.itemId = item.id;
+    removeButton.textContent = "삭제";
+    header.append(title, removeButton);
+
+    const controls = createElement("div", "art-color-controls");
+
+    const picker = document.createElement("input");
+    picker.type = "color";
+    picker.value = normalizeHex(item.hex);
+    picker.dataset.artColorField = "hex";
+    picker.dataset.itemId = item.id;
+    picker.setAttribute("aria-label", `색상 ${index + 1} 선택`);
+
+    const hexField = createElement("div", "field art-color-hex-field");
+    const hexLabel = document.createElement("label");
+    const hexInputId = `art-color-hex-${item.id}`;
+    hexLabel.htmlFor = hexInputId;
+    hexLabel.textContent = "HEX";
+    const hexInput = document.createElement("input");
+    hexInput.id = hexInputId;
+    hexInput.type = "text";
+    hexInput.value = normalizeHex(item.hex);
+    hexInput.placeholder = "#808080";
+    hexInput.spellcheck = false;
+    hexInput.dataset.artColorField = "hex";
+    hexInput.dataset.itemId = item.id;
+    hexField.append(hexLabel, hexInput);
+
+    const nameField = createElement("div", "field art-color-name-field");
+    const nameLabel = document.createElement("label");
+    const nameInputId = `art-color-name-${item.id}`;
+    nameLabel.htmlFor = nameInputId;
+    nameLabel.textContent = "이름 (선택)";
+    const nameInput = document.createElement("input");
+    nameInput.id = nameInputId;
+    nameInput.type = "text";
+    nameInput.value = item.name || "";
+    nameInput.placeholder = "예: 메인 컬러";
+    nameInput.dataset.artColorField = "name";
+    nameInput.dataset.itemId = item.id;
+    nameField.append(nameLabel, nameInput);
+
+    controls.append(picker, hexField, nameField);
+    wrapper.append(header, controls);
+    return wrapper;
+  }
+
+  function focusLatestArtColorItem() {
+    requestAnimationFrame(() => {
+      const lastInput = dom.artColorItems?.querySelector(
+        ".art-color-item:last-child input[type='color']",
+      );
+      lastInput?.focus();
+    });
+  }
+
+  function nonEmptyArtColors() {
+    return (state.concept.images.artColors || []).filter((item) =>
+      Boolean(normalizeHex(item?.hex)),
+    );
+  }
+
+  function normalizeHex(value) {
+    let hex = clean(value);
+    if (!hex) return "#808080";
+    if (!hex.startsWith("#")) hex = `#${hex}`;
+    if (/^#[0-9a-fA-F]{3}$/.test(hex)) {
+      hex = `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`;
+    }
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return "#808080";
+    return hex.toUpperCase();
   }
 
   function renderComparisonTable() {
@@ -2136,13 +2291,47 @@
     });
 
     const artConcept = clean(images.artConcept);
-    if (artConcept) {
+    const artColors = nonEmptyArtColors();
+    if (artConcept || artColors.length > 0) {
       const entry = createElement("article", "resume-entry concept-entry");
       const heading = createElement("h3", "entry-title");
-      const body = createElement("p", "entry-description");
       heading.textContent = "아트 컨셉";
-      body.textContent = artConcept;
-      entry.append(heading, body);
+      entry.append(heading);
+
+      if (artConcept) {
+        const body = createElement("p", "entry-description");
+        body.textContent = artConcept;
+        entry.append(body);
+      }
+
+      if (artColors.length > 0) {
+        const paletteLabel = createElement("p", "art-palette-label");
+        paletteLabel.textContent = "아트 컬러";
+        const palette = createElement("div", "art-palette");
+        artColors.forEach((item) => {
+          const swatch = createElement("div", "art-palette-swatch");
+          const chip = createElement("span", "art-palette-chip");
+          chip.style.backgroundColor = normalizeHex(item.hex);
+          chip.title = clean(item.name)
+            ? `${clean(item.name)} (${normalizeHex(item.hex)})`
+            : normalizeHex(item.hex);
+
+          const meta = createElement("span", "art-palette-meta");
+          const hexText = createElement("span", "art-palette-hex");
+          hexText.textContent = normalizeHex(item.hex);
+          meta.append(hexText);
+          if (clean(item.name)) {
+            const nameText = createElement("span", "art-palette-name");
+            nameText.textContent = clean(item.name);
+            meta.append(nameText);
+          }
+
+          swatch.append(chip, meta);
+          palette.append(swatch);
+        });
+        entry.append(paletteLabel, palette);
+      }
+
       list.append(entry);
     }
 
@@ -2197,6 +2386,9 @@
       }
 
       const value = data[field];
+      if (sectionKey === "images" && field === "artColors") {
+        return nonEmptyArtColors().length > 0;
+      }
       if (sectionKey === "images" && field !== "artConcept") {
         return Boolean(sanitizeImage(value));
       }
@@ -2323,6 +2515,7 @@
         playScreen: sanitizeImage(source.images?.playScreen),
         ui: sanitizeImage(source.images?.ui),
         artConcept: coerceText(source.images?.artConcept),
+        artColors: sanitizeArtColors(source.images?.artColors),
       },
       market: sanitizeTextObject(source.market, fallback.market),
       team: sanitizeTextObject(source.team, fallback.team),
@@ -2341,6 +2534,21 @@
       growth: coerceText(source?.growth),
       growthImage: sanitizeImage(source?.growthImage),
     };
+  }
+
+  function sanitizeArtColors(source) {
+    if (!Array.isArray(source)) return [];
+
+    return source
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        return {
+          id: coerceText(item.id) || createId("color"),
+          hex: normalizeHex(item.hex),
+          name: coerceText(item.name),
+        };
+      })
+      .filter(Boolean);
   }
 
   function sanitizeIntro(source, fallback) {
@@ -2762,6 +2970,18 @@
       }
     });
     appendPromptField(imageNotes, "images.artConcept");
+    const artColors = nonEmptyArtColors();
+    if (artColors.length) {
+      imageNotes.push(
+        `- 아트 컬러: ${artColors
+          .map((item) => {
+            const hex = normalizeHex(item.hex);
+            const name = clean(item.name);
+            return name ? `${name}(${hex})` : hex;
+          })
+          .join(", ")}`,
+      );
+    }
     if (imageNotes.length) {
       sections.push("", "## 게임 이미지 / 아트", ...imageNotes);
     }

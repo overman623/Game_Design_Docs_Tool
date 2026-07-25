@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260725-23" />
-    <script src="vendor/pptxgen.bundle.js?v=20260725-23" defer></script>
-    <script src="app.js?v=20260725-23" defer></script>
-    <script src="export.js?v=20260725-23" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260726-01" />
+    <script src="vendor/pptxgen.bundle.js?v=20260726-01" defer></script>
+    <script src="app.js?v=20260726-01" defer></script>
+    <script src="export.js?v=20260726-01" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -837,8 +837,23 @@
                   id="art-concept"
                   rows="4"
                   data-field="images.artConcept"
-                  placeholder="색감, 톤, 레퍼런스, 비주얼 키워드를 적어 주세요."
+                  placeholder="톤, 분위기, 비주얼 키워드를 적어 주세요."
                 ></textarea>
+              </div>
+
+              <div class="field art-color-field">
+                <label>아트 컬러</label>
+                <p class="field-help">
+                  대표 색상을 골라 팔레트를 만들어 보세요. 이름은 선택 사항입니다.
+                </p>
+                <div id="art-color-items" class="repeat-list art-color-list"></div>
+                <button
+                  class="button button-add"
+                  type="button"
+                  data-action="add-art-color"
+                >
+                  색상 추가
+                </button>
               </div>
             </div>
           </details>
