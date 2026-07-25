@@ -125,6 +125,7 @@
     resetButton: document.querySelector("#reset-data"),
     sampleButton: document.querySelector("#load-sample"),
     printButton: document.querySelector("#print-document"),
+    copyAiPromptButton: document.querySelector("#copy-ai-prompt"),
     openGuideButton: document.querySelector("#open-guide"),
     closeGuideButton: document.querySelector("#close-guide"),
     guideDialog: document.querySelector("#guide-dialog"),
@@ -416,6 +417,7 @@
     dom.resetButton.addEventListener("click", resetAllData);
     dom.sampleButton.addEventListener("click", loadSampleData);
     dom.printButton.addEventListener("click", () => window.print());
+    dom.copyAiPromptButton?.addEventListener("click", copyAiSummaryPrompt);
     dom.openGuideButton.addEventListener("click", openGuide);
     dom.closeGuideButton.addEventListener("click", closeGuide);
     dom.guideDialog.addEventListener("click", handleGuideBackdropClick);
@@ -2668,6 +2670,181 @@
     if (event.target === dom.guideDialog) closeGuide();
   }
 
+  async function copyAiSummaryPrompt() {
+    const prompt = buildAiSummaryPrompt();
+    if (!prompt) {
+      setSaveStatus("요약할 내용이 아직 없어요.", "error");
+      return;
+    }
+
+    try {
+      await writeTextToClipboard(prompt);
+      announceAiPromptCopied();
+      setSaveStatus("AI 요약 프롬프트를 복사했어요.", "saved");
+    } catch (error) {
+      console.warn("프롬프트 복사에 실패했습니다.", error);
+      setSaveStatus("복사하지 못했어요. 브라우저 권한을 확인해 주세요.", "error");
+    }
+  }
+
+  function buildAiSummaryPrompt() {
+    const sections = [];
+    const docTitle = clean(state.template.title) || "게임 컨셉 기획서";
+    const author = clean(state.template.author);
+    const docIntro = clean(state.template.intro);
+
+    sections.push("## 문서 정보");
+    sections.push(`- 문서 제목: ${docTitle}`);
+    if (author) sections.push(`- 작성자: ${author}`);
+    if (docIntro) sections.push(`- 문서 소개: ${docIntro}`);
+
+    const introLines = [];
+    appendPromptField(introLines, "intro.name");
+    appendPromptField(introLines, "intro.oneLiner");
+    appendPromptField(introLines, "intro.coreConcept");
+    appendPromptField(introLines, "intro.genre");
+    appendPromptField(introLines, "intro.platform");
+    appendPromptField(introLines, "intro.target");
+    const references = nonEmptyReferences()
+      .map((item) => clean(item.name))
+      .filter(Boolean);
+    if (references.length) {
+      introLines.push(`- 레퍼런스 게임: ${references.join(", ")}`);
+    }
+    if (introLines.length) {
+      sections.push("", "## 게임 소개", ...introLines);
+    }
+
+    const featureLines = [];
+    appendPromptField(featureLines, "features.whySpecial");
+    appendPromptField(featureLines, "features.differentiationText");
+    const comparisons = nonEmptyComparisons();
+    if (comparisons.length) {
+      const games = state.concept.features.comparisonGames || [];
+      featureLines.push("- 비교표:");
+      comparisons.forEach((row) => {
+        const aspect = clean(row.aspect) || "비교 항목";
+        const otherValues = games
+          .map((game) => {
+            const name = clean(game.name) || "비교 대상";
+            const value = clean(row.values?.[game.id]);
+            return value ? `${name}=${value}` : null;
+          })
+          .filter(Boolean);
+        const ourGame = clean(row.ourGame);
+        const parts = [...otherValues];
+        if (ourGame) parts.push(`${getOurGameLabel()}=${ourGame}`);
+        featureLines.push(
+          parts.length
+            ? `  - ${aspect}: ${parts.join(" / ")}`
+            : `  - ${aspect}`,
+        );
+      });
+    }
+    appendPromptField(featureLines, "features.playerExperience");
+    if (featureLines.length) {
+      sections.push("", "## 게임의 특징", ...featureLines);
+    }
+
+    const gameplayLines = [];
+    appendPromptField(gameplayLines, "gameplay.flow");
+    appendPromptField(gameplayLines, "gameplay.coreSystems");
+    appendPromptField(gameplayLines, "gameplay.winLose");
+    appendPromptField(gameplayLines, "gameplay.growth");
+    if (gameplayLines.length) {
+      sections.push("", "## 게임 플레이 방식", ...gameplayLines);
+    }
+
+    const imageNotes = [];
+    IMAGE_FIELDS.forEach((item) => {
+      if (sanitizeImage(getPath(state.concept, item.path))) {
+        imageNotes.push(`- ${item.label}: 있음`);
+      }
+    });
+    appendPromptField(imageNotes, "images.artConcept");
+    if (imageNotes.length) {
+      sections.push("", "## 게임 이미지 / 아트", ...imageNotes);
+    }
+
+    const marketLines = [];
+    appendPromptField(marketLines, "market.targetPlatform");
+    appendPromptField(marketLines, "market.targetUsers");
+    appendPromptField(marketLines, "market.postLaunch");
+    if (marketLines.length) {
+      sections.push("", "## 시장 진출 계획", ...marketLines);
+    }
+
+    const teamLines = [];
+    appendPromptField(teamLines, "team.teamName");
+    appendPromptField(teamLines, "team.members");
+    if (teamLines.length) {
+      sections.push("", "## 팀 소개 및 역할", ...teamLines);
+    }
+
+    const episodeLines = [];
+    appendPromptField(episodeLines, "episode.motivation");
+    appendPromptField(episodeLines, "episode.trials");
+    appendPromptField(episodeLines, "episode.redesign");
+    appendPromptField(episodeLines, "episode.futureGoals");
+    if (episodeLines.length) {
+      sections.push("", "## 개발 과정 에피소드", ...episodeLines);
+    }
+
+    const hasBody = sections.some(
+      (line) => line.startsWith("## ") && line !== "## 문서 정보",
+    );
+    if (!hasBody) return "";
+
+    return [
+      "당신은 게임 기획 문서 작성 도우미입니다.",
+      "아래 게임 컨셉 기획서 내용을 바탕으로, 발표·공유용 1페이지 요약을 작성해 주세요.",
+      "",
+      "## 작성 요구사항",
+      "- 한국어로 작성할 것",
+      "- 한 장에 들어갈 짧은 분량으로 작성할 것",
+      "- 구성: 게임명과 한 줄 소개, 장르·플랫폼·타겟, 핵심 컨셉, 차별점, 플레이 핵심, 팀/작성 정보",
+      "- 없는 내용은 지어내지 말 것",
+      "- 불릿 중심으로 읽기 쉽게 정리할 것",
+      "- 필요하면 제목과 부제만 짧게 제안할 것",
+      "",
+      ...sections,
+    ].join("\n");
+  }
+
+  function appendPromptField(lines, path) {
+    const value = clean(getPath(state.concept, path));
+    if (!value) return;
+    const label = FIELD_LABELS[path] || path;
+    lines.push(`- ${label}: ${value}`);
+  }
+
+  async function writeTextToClipboard(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.append(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    if (!copied) throw new Error("clipboard copy failed");
+  }
+
+  function announceAiPromptCopied() {
+    if (!dom.copyAiPromptButton) return;
+    const original = dom.copyAiPromptButton.textContent;
+    dom.copyAiPromptButton.textContent = "프롬프트 복사됨";
+    window.setTimeout(() => {
+      dom.copyAiPromptButton.textContent = original;
+    }, 1600);
+  }
+
   function getPath(object, path) {
     return path.split(".").reduce((current, key) => current?.[key], object);
   }
@@ -2691,9 +2868,6 @@
     if (className) element.className = className;
     return element;
   }
-
-  // Keep field labels available for future extensions / debugging.
-  void FIELD_LABELS;
 
   init();
 })();

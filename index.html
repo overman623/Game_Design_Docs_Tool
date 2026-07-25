@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260725-22" />
-    <script src="vendor/pptxgen.bundle.js?v=20260725-22" defer></script>
-    <script src="app.js?v=20260725-22" defer></script>
-    <script src="export.js?v=20260725-22" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260725-23" />
+    <script src="vendor/pptxgen.bundle.js?v=20260725-23" defer></script>
+    <script src="app.js?v=20260725-23" defer></script>
+    <script src="export.js?v=20260725-23" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -42,6 +42,9 @@
         </button>
         <button class="button button-output" id="export-svg" type="button">
           Figma SVG
+        </button>
+        <button class="button button-output" id="copy-ai-prompt" type="button">
+          AI 요약 프롬프트 복사
         </button>
       </div>
     </header>
@@ -965,7 +968,8 @@
             <p class="section-kicker">내 문서</p>
             <h2 id="preview-title">완성 기획서 미리보기</h2>
             <p class="preview-tip">
-              PDF·수정 가능한 PPTX·Figma SVG 중 필요한 형식으로 저장할 수 있어요.
+              PDF·PPTX·Figma SVG로 저장하거나, AI 요약 프롬프트를 복사할 수
+              있어요.
             </p>
             <p class="export-status" id="export-status" aria-live="polite"></p>
           </div>
@@ -1041,6 +1045,8 @@
             <p>
               PDF는 제출·공유용, PPTX는 선택한 레이아웃(16:9 또는 A4)으로
               수정 가능한 슬라이드, Figma SVG는 추가 디자인 편집용입니다.
+              AI 요약 프롬프트 복사는 ChatGPT 등에 붙여넣어 1페이지 요약을 받을
+              때 쓰면 됩니다.
             </p>
           </div>
         </section>
