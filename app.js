@@ -6,6 +6,9 @@
     template: "gameConceptBuilder.templateSettings.v1",
   };
 
+  const PROJECT_JSON_FORMAT = "game-concept-builder";
+  const PROJECT_JSON_VERSION = 1;
+
   const LAYOUT_NOTES = {
     slides:
       "슬라이드형: 16:9 발표용으로 항목을 장표처럼 나눕니다. PPTX도 와이드스크린으로 저장됩니다.",
@@ -131,6 +134,9 @@
     refreshButton: document.querySelector("#refresh-preview"),
     resetButton: document.querySelector("#reset-data"),
     sampleButton: document.querySelector("#load-sample"),
+    exportJsonButton: document.querySelector("#export-json"),
+    importJsonButton: document.querySelector("#import-json"),
+    importJsonFile: document.querySelector("#import-json-file"),
     printButton: document.querySelector("#print-document"),
     copyAiPromptButton: document.querySelector("#copy-ai-prompt"),
     openGuideButton: document.querySelector("#open-guide"),
@@ -453,6 +459,11 @@
     });
     dom.resetButton.addEventListener("click", resetAllData);
     dom.sampleButton.addEventListener("click", loadSampleData);
+    dom.exportJsonButton?.addEventListener("click", exportProjectJson);
+    dom.importJsonButton?.addEventListener("click", () => {
+      dom.importJsonFile?.click();
+    });
+    dom.importJsonFile?.addEventListener("change", handleImportJsonFile);
     dom.printButton.addEventListener("click", () => window.print());
     dom.copyAiPromptButton?.addEventListener("click", copyAiSummaryPrompt);
     dom.openGuideButton.addEventListener("click", openGuide);
@@ -3318,6 +3329,146 @@
       );
     });
     saveStateNow();
+  }
+
+  function exportProjectJson() {
+    const payload = {
+      format: PROJECT_JSON_FORMAT,
+      version: PROJECT_JSON_VERSION,
+      exportedAt: new Date().toISOString(),
+      concept: state.concept,
+      template: state.template,
+    };
+
+    const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], {
+      type: "application/json;charset=utf-8",
+    });
+    const baseName =
+      clean(state.concept.intro.name) ||
+      clean(state.template.title) ||
+      "game-concept";
+    downloadTextFile(blob, `${safeProjectFileName(baseName)}.json`);
+    setSaveStatus("JSON 파일을 저장했어요.", "saved");
+  }
+
+  function handleImportJsonFile(event) {
+    const input = event.target;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result || ""));
+        applyImportedProject(parsed);
+      } catch (error) {
+        console.warn("JSON 불러오기에 실패했습니다.", error);
+        setSaveStatus("불러올 수 없는 JSON 파일이에요.", "error");
+      }
+    };
+    reader.onerror = () => {
+      setSaveStatus("파일을 읽지 못했어요.", "error");
+    };
+    reader.readAsText(file);
+  }
+
+  function applyImportedProject(payload) {
+    const project = normalizeImportedProject(payload);
+    if (!project) {
+      setSaveStatus("이 도구에서 만든 JSON 형식이 아니에요.", "error");
+      return;
+    }
+
+    if (
+      (hasAnyConceptInput() || hasAnyTemplateCustomization()) &&
+      !window.confirm(
+        "지금 작성한 내용을 지우고 JSON 파일 내용으로 불러올까요?",
+      )
+    ) {
+      return;
+    }
+
+    const defaults = {
+      concept: createDefaultConcept(),
+      template: createDefaultTemplate(),
+    };
+
+    state.concept = sanitizeConcept(project.concept, defaults.concept);
+    state.template = sanitizeTemplate(project.template, defaults.template);
+
+    if (!clean(state.template.author) && project.concept?.intro) {
+      state.template.author =
+        coerceText(project.concept.intro.author) ||
+        coerceText(project.concept.intro.teamName);
+    }
+
+    syncFormFromState();
+    syncImageFitClass();
+    renderPreview();
+    updatePresetNote();
+    IMAGE_FIELDS.forEach((item) => {
+      const input = dom.form.querySelector(
+        `input[type="file"][data-image-field="${item.path}"]`,
+      );
+      if (input) input.value = "";
+    });
+    saveStateNow();
+    setSaveStatus("JSON 내용을 불러왔어요.", "saved");
+  }
+
+  function normalizeImportedProject(payload) {
+    if (!payload || typeof payload !== "object") return null;
+
+    if (payload.concept && typeof payload.concept === "object") {
+      if (
+        payload.format &&
+        payload.format !== PROJECT_JSON_FORMAT
+      ) {
+        return null;
+      }
+
+      return {
+        concept: payload.concept,
+        template:
+          payload.template && typeof payload.template === "object"
+            ? payload.template
+            : createDefaultTemplate(),
+      };
+    }
+
+    return null;
+  }
+
+  function hasAnyTemplateCustomization() {
+    const defaults = createDefaultTemplate();
+    return (
+      clean(state.template.title) !== defaults.title ||
+      clean(state.template.author) !== defaults.author ||
+      clean(state.template.intro) !== defaults.intro ||
+      state.template.layout !== defaults.layout ||
+      state.template.theme !== defaults.theme
+    );
+  }
+
+  function downloadTextFile(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function safeProjectFileName(value) {
+    const cleaned = clean(value)
+      .replace(/[\\/:*?"<>|]+/g, "-")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return cleaned || "game-concept";
   }
 
   function hasAnyConceptInput() {

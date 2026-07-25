@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260726-07" />
-    <script src="vendor/pptxgen.bundle.js?v=20260726-07" defer></script>
-    <script src="app.js?v=20260726-07" defer></script>
-    <script src="export.js?v=20260726-07" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260726-08" />
+    <script src="vendor/pptxgen.bundle.js?v=20260726-08" defer></script>
+    <script src="app.js?v=20260726-08" defer></script>
+    <script src="export.js?v=20260726-08" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -34,6 +34,18 @@
         <button class="button button-secondary" id="load-sample" type="button">
           예시로 채워보기
         </button>
+        <button class="button button-secondary" id="export-json" type="button">
+          JSON 저장
+        </button>
+        <button class="button button-secondary" id="import-json" type="button">
+          JSON 불러오기
+        </button>
+        <input
+          id="import-json-file"
+          class="visually-hidden"
+          type="file"
+          accept="application/json,.json"
+        />
         <button class="button button-primary" id="print-document" type="button">
           PDF로 저장
         </button>
@@ -972,8 +984,8 @@
             <p class="section-kicker">내 문서</p>
             <h2 id="preview-title">완성 기획서 미리보기</h2>
             <p class="preview-tip">
-              PDF·PPTX·Figma SVG로 저장하거나, AI 요약 프롬프트를 복사할 수
-              있어요.
+              PDF·PPTX·Figma SVG로 저장하거나, JSON으로 백업·불러오기, AI 요약
+              프롬프트를 복사할 수 있어요.
             </p>
             <p class="export-status" id="export-status" aria-live="polite"></p>
           </div>
@@ -1049,8 +1061,9 @@
             <p>
               PDF는 제출·공유용, PPTX는 선택한 레이아웃(16:9 또는 A4)으로
               수정 가능한 슬라이드, Figma SVG는 추가 디자인 편집용입니다.
-              AI 요약 프롬프트 복사는 ChatGPT 등에 붙여넣어 1페이지 요약을 받을
-              때 쓰면 됩니다.
+              JSON 저장·불러오기로 작성 내용을 백업하거나 다른 기기에서 이어서
+              작업할 수 있어요. AI 요약 프롬프트 복사는 ChatGPT 등에 붙여넣어
+              1페이지 요약을 받을 때 쓰면 됩니다.
             </p>
           </div>
         </section>
