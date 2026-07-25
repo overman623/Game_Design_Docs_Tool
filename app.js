@@ -1591,12 +1591,7 @@
       features: () => createFeaturesSection(nextSectionNumber()),
       gameplay: () => createGameplaySection(nextSectionNumber()),
       images: () => createImagesSection(nextSectionNumber()),
-      market: () =>
-        createTextSection("시장 진출 계획", "market", nextSectionNumber(), [
-          ["targetPlatform", "목표 플랫폼"],
-          ["targetUsers", "목표 유저"],
-          ["postLaunch", "출시 이후 계획"],
-        ]),
+      market: () => createMarketSection(nextSectionNumber()),
       team: () => createTeamSection(nextSectionNumber()),
       episode: () => createEpisodeSection(nextSectionNumber()),
     };
@@ -2180,6 +2175,36 @@
 
   function shouldBundleMotivationWithTeam() {
     return isSlideLayout() && Boolean(state.template.visibility.team);
+  }
+
+  function createMarketSection(sectionNumber) {
+    if (!isSlideLayout()) {
+      return createTextSection("시장 진출 계획", "market", sectionNumber, [
+        ["targetPlatform", "목표 플랫폼"],
+        ["targetUsers", "목표 유저"],
+        ["postLaunch", "출시 이후 계획"],
+      ]);
+    }
+
+    const section = createDocumentSection(sectionNumber, "시장 진출 계획");
+    const list = createElement("div", "resume-entry-list");
+    const platform = clean(state.concept.market.targetPlatform);
+    const users = clean(state.concept.market.targetUsers);
+    const postLaunch = clean(state.concept.market.postLaunch);
+
+    if (platform || users || postLaunch) {
+      const entry = createElement(
+        "article",
+        "resume-entry concept-entry slide-combined-entry",
+      );
+      appendSlideFieldBlock(entry, "목표 플랫폼", platform);
+      appendSlideFieldBlock(entry, "목표 유저", users);
+      appendSlideFieldBlock(entry, "출시 이후 계획", postLaunch);
+      list.append(entry);
+    }
+
+    section.append(list);
+    return section;
   }
 
   function createTeamSection(sectionNumber) {
