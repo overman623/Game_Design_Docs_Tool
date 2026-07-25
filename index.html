@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260725-19" />
-    <script src="vendor/pptxgen.bundle.js?v=20260725-19" defer></script>
-    <script src="app.js?v=20260725-19" defer></script>
-    <script src="export.js?v=20260725-19" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260725-21" />
+    <script src="vendor/pptxgen.bundle.js?v=20260725-21" defer></script>
+    <script src="app.js?v=20260725-21" defer></script>
+    <script src="export.js?v=20260725-21" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -167,6 +167,18 @@
                     <option value="medium">보통</option>
                     <option value="large">크게</option>
                   </select>
+                </div>
+                <div class="field field-span">
+                  <label for="image-fit">이미지 표시</label>
+                  <select id="image-fit" data-template-field="imageFit">
+                    <option value="contain">비율 유지 (전체 표시)</option>
+                    <option value="cover16x9">16:9로 채우기 (잘림)</option>
+                    <option value="cover1x1">정사각형으로 채우기 (잘림)</option>
+                  </select>
+                  <p class="field-help">
+                    이미 넣은 이미지도 표시 방식이 바뀝니다. 새로 넣을 때도 같은
+                    기준으로 저장됩니다.
+                  </p>
                 </div>
               </div>
 

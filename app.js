@@ -268,6 +268,7 @@
       intro: "작성한 내용을 바탕으로 정리한 게임 컨셉 기획서입니다.",
       layout: "slides",
       fontSize: "medium",
+      imageFit: "contain",
       pageMargin: "preset",
       sectionSpacing: "preset",
       headingStyle: "preset",
@@ -392,6 +393,7 @@
   function init() {
     state = loadState();
     syncFormFromState();
+    syncImageFitClass();
     renderPreview();
     updatePresetNote();
     prepareImagePasteTargets();
@@ -545,6 +547,9 @@
     } else if (target.matches("[data-template-field]")) {
       state.template[target.dataset.templateField] = target.value;
       updatePresetNote();
+      if (target.dataset.templateField === "imageFit") {
+        syncImageFitClass();
+      }
     } else if (target.matches("[data-template-visibility]")) {
       state.template.visibility[target.dataset.templateVisibility] = target.checked;
       renderSectionOrderControls();
@@ -706,7 +711,7 @@
       return false;
     }
 
-    setImageStatus(path, "이미지를 16:9 비율로 정리하고 있어요.");
+    setImageStatus(path, getImageProcessingMessage());
 
     try {
       const source = await readFileAsDataUrl(file);
@@ -759,7 +764,7 @@
       return false;
     }
 
-    setReferenceImageStatus(itemId, "이미지를 16:9 비율로 정리하고 있어요.");
+    setReferenceImageStatus(itemId, getImageProcessingMessage());
 
     try {
       const source = await readFileAsDataUrl(file);
@@ -793,10 +798,54 @@
   }
 
   function resizeConceptImage(source) {
-    return resizeImageToRatio(source, 960, 540, 0.82);
+    const fit = state.template.imageFit || "contain";
+    if (fit === "cover16x9") return resizeImageToCover(source, 1280, 720, 0.86);
+    if (fit === "cover1x1") return resizeImageToCover(source, 960, 960, 0.86);
+    return resizeImageToFit(source, 1280, 720, 0.86);
   }
 
-  function resizeImageToRatio(source, outputWidth, outputHeight, quality) {
+  function getImageProcessingMessage() {
+    const fit = state.template.imageFit || "contain";
+    if (fit === "cover16x9") return "이미지를 16:9로 맞춰 채우고 있어요.";
+    if (fit === "cover1x1") return "이미지를 정사각형으로 맞춰 채우고 있어요.";
+    return "비율을 유지한 채 이미지 크기를 맞추고 있어요.";
+  }
+
+  function resizeImageToFit(source, maxWidth, maxHeight, quality) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        if (!context) {
+          reject(new Error("이미지 처리 기능을 사용할 수 없습니다."));
+          return;
+        }
+
+        const scale = Math.min(
+          1,
+          maxWidth / image.naturalWidth,
+          maxHeight / image.naturalHeight,
+        );
+        const outputWidth = Math.max(1, Math.round(image.naturalWidth * scale));
+        const outputHeight = Math.max(1, Math.round(image.naturalHeight * scale));
+
+        canvas.width = outputWidth;
+        canvas.height = outputHeight;
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, outputWidth, outputHeight);
+        context.drawImage(image, 0, 0, outputWidth, outputHeight);
+
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+
+      image.onerror = () => reject(new Error("이미지 디코딩 실패"));
+      image.src = source;
+    });
+  }
+
+  function resizeImageToCover(source, outputWidth, outputHeight, quality) {
     return new Promise((resolve, reject) => {
       const image = new Image();
 
@@ -907,6 +956,7 @@
       input.checked = Boolean(state.template.visibility[input.dataset.templateVisibility]);
     });
 
+    syncImageFitClass();
     renderAllImagePreviews();
     renderReferenceItems();
     renderComparisonTable();
@@ -2115,10 +2165,16 @@
       LAYOUT_NOTES[state.template.layout] || LAYOUT_NOTES.standard;
   }
 
+  function syncImageFitClass() {
+    document.documentElement.dataset.imageFit =
+      state.template.imageFit || "contain";
+  }
+
   function documentTemplateClasses() {
     const classes = [
       `layout-${state.template.layout || "standard"}`,
       `font-${state.template.fontSize || "medium"}`,
+      `image-fit-${state.template.imageFit || "contain"}`,
     ];
 
     if (state.template.pageMargin && state.template.pageMargin !== "preset") {
@@ -2370,6 +2426,7 @@
       "portfolio",
     ];
     const validFontSizes = ["small", "medium", "large"];
+    const validImageFits = ["contain", "cover16x9", "cover1x1"];
     const validPageMargins = ["preset", "narrow", "normal", "wide"];
     const validSectionSpacings = ["preset", "tight", "normal", "relaxed"];
     const validHeadingStyles = ["preset", "line", "numbered", "minimal"];
@@ -2394,6 +2451,9 @@
       fontSize: validFontSizes.includes(source.fontSize)
         ? source.fontSize
         : fallback.fontSize,
+      imageFit: validImageFits.includes(source.imageFit)
+        ? source.imageFit
+        : fallback.imageFit,
       pageMargin: validPageMargins.includes(source.pageMargin)
         ? source.pageMargin
         : fallback.pageMargin,

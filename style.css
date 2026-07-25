@@ -575,6 +575,28 @@ summary:focus-visible,
 .concept-image-panel .concept-image-preview img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  background: #f0f2f4;
+}
+
+html[data-image-fit="cover16x9"] .concept-image-panel .concept-image-preview,
+html[data-image-fit="cover1x1"] .concept-image-panel .concept-image-preview {
+  aspect-ratio: auto;
+}
+
+html[data-image-fit="cover16x9"] .concept-image-panel .concept-image-preview {
+  aspect-ratio: 16 / 9;
+}
+
+html[data-image-fit="cover1x1"] .concept-image-panel .concept-image-preview {
+  width: 96px;
+  aspect-ratio: 1 / 1;
+}
+
+html[data-image-fit="cover16x9"] .concept-image-panel .concept-image-preview img,
+html[data-image-fit="cover1x1"] .concept-image-panel .concept-image-preview img,
+html[data-image-fit="cover16x9"] .photo-input-preview img,
+html[data-image-fit="cover1x1"] .photo-input-preview img {
   object-fit: cover;
 }
 
@@ -593,7 +615,28 @@ summary:focus-visible,
 .concept-document-image img {
   display: block;
   width: 100%;
+  max-height: 420px;
   height: auto;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+.image-fit-cover16x9 .concept-document-image {
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+}
+
+.image-fit-cover1x1 .concept-document-image {
+  aspect-ratio: 1 / 1;
+  max-width: min(100%, 420px);
+}
+
+.image-fit-cover16x9 .concept-document-image img,
+.image-fit-cover1x1 .concept-document-image img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
 }
 
 .concept-entry .entry-title {
@@ -761,7 +804,7 @@ summary:focus-visible,
 .photo-input-preview img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .photo-upload-copy > strong {
@@ -2031,7 +2074,31 @@ summary:focus-visible,
 
 .layout-slides .concept-document-image img {
   max-height: 380px;
+  width: auto;
+  max-width: 100%;
   object-fit: contain;
+}
+
+.layout-slides.image-fit-cover16x9 .concept-document-image,
+.layout-slides.image-fit-cover1x1 .concept-document-image {
+  max-height: none;
+}
+
+.layout-slides.image-fit-cover16x9 .concept-document-image {
+  aspect-ratio: 16 / 9;
+}
+
+.layout-slides.image-fit-cover1x1 .concept-document-image {
+  aspect-ratio: 1 / 1;
+  max-width: min(100%, 480px);
+}
+
+.layout-slides.image-fit-cover16x9 .concept-document-image img,
+.layout-slides.image-fit-cover1x1 .concept-document-image img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
 }
 
 .layout-slides .slide-meta-grid {
@@ -2088,7 +2155,9 @@ summary:focus-visible,
 
 .layout-slides .slide-reference-grid .concept-document-image img {
   max-height: 240px;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .layout-slides .comparison-table-wrap {
