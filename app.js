@@ -212,6 +212,7 @@
   let saveTimer = null;
   let paginationFrame = null;
   let lastImagePasteTarget = null;
+  let artColorDragId = null;
 
   function createDefaultConcept() {
     const firstGame = createEmptyComparisonGame("비교 대상 게임 1");
@@ -442,6 +443,105 @@
 
     window.addEventListener("beforeunload", saveStateNow);
     window.addEventListener("resize", schedulePreviewPagination);
+    bindArtColorDragEvents();
+  }
+
+  function bindArtColorDragEvents() {
+    if (!dom.artColorItems) return;
+
+    dom.artColorItems.addEventListener("pointerdown", (event) => {
+      const item = event.target.closest(".art-color-item");
+      if (!item) return;
+      item.draggable = Boolean(event.target.closest(".art-color-drag-handle"));
+    });
+
+    dom.artColorItems.addEventListener("dragstart", (event) => {
+      const item = event.target.closest(".art-color-item");
+      if (!item?.draggable) {
+        event.preventDefault();
+        return;
+      }
+
+      artColorDragId = item.dataset.itemId;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", artColorDragId);
+      item.classList.add("is-dragging");
+    });
+
+    dom.artColorItems.addEventListener("dragover", (event) => {
+      const item = event.target.closest(".art-color-item");
+      if (!item || !artColorDragId || item.dataset.itemId === artColorDragId) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+
+      const rect = item.getBoundingClientRect();
+      const placeAfter = event.clientY >= rect.top + rect.height / 2;
+      clearArtColorDropIndicators();
+      item.classList.add(placeAfter ? "drop-after" : "drop-before");
+    });
+
+    dom.artColorItems.addEventListener("dragleave", (event) => {
+      const item = event.target.closest(".art-color-item");
+      if (!item) return;
+      if (item.contains(event.relatedTarget)) return;
+      item.classList.remove("drop-before", "drop-after");
+    });
+
+    dom.artColorItems.addEventListener("drop", (event) => {
+      const target = event.target.closest(".art-color-item");
+      const draggedId =
+        event.dataTransfer.getData("text/plain") || artColorDragId;
+      if (!target || !draggedId) return;
+
+      event.preventDefault();
+      const rect = target.getBoundingClientRect();
+      const placeAfter = event.clientY >= rect.top + rect.height / 2;
+      reorderArtColors(draggedId, target.dataset.itemId, placeAfter);
+      clearArtColorDropIndicators();
+      artColorDragId = null;
+      renderArtColorItems();
+      renderPreview();
+      scheduleSave();
+    });
+
+    dom.artColorItems.addEventListener("dragend", () => {
+      clearArtColorDropIndicators();
+      artColorDragId = null;
+      dom.artColorItems
+        .querySelectorAll(".art-color-item.is-dragging")
+        .forEach((item) => {
+          item.classList.remove("is-dragging");
+          item.draggable = false;
+        });
+    });
+  }
+
+  function clearArtColorDropIndicators() {
+    dom.artColorItems
+      ?.querySelectorAll(".art-color-item.drop-before, .art-color-item.drop-after")
+      .forEach((item) => item.classList.remove("drop-before", "drop-after"));
+  }
+
+  function reorderArtColors(draggedId, targetId, placeAfter) {
+    if (!draggedId || !targetId || draggedId === targetId) return;
+
+    const colors = [...(state.concept.images.artColors || [])];
+    const fromIndex = colors.findIndex((item) => item.id === draggedId);
+    let toIndex = colors.findIndex((item) => item.id === targetId);
+    if (fromIndex < 0 || toIndex < 0) return;
+
+    const [moved] = colors.splice(fromIndex, 1);
+    toIndex = colors.findIndex((item) => item.id === targetId);
+    if (toIndex < 0) {
+      colors.push(moved);
+    } else {
+      colors.splice(placeAfter ? toIndex + 1 : toIndex, 0, moved);
+    }
+
+    state.concept.images.artColors = colors;
   }
 
   function rememberImagePasteTarget(event) {
@@ -1194,16 +1294,25 @@
   function createArtColorInputItem(item, index) {
     const wrapper = createElement("article", "repeat-item art-color-item");
     wrapper.dataset.itemId = item.id;
+    wrapper.draggable = false;
 
     const header = createElement("div", "repeat-item-header");
+    const titleGroup = createElement("div", "art-color-title-group");
+    const handle = createElement("button", "art-color-drag-handle");
+    handle.type = "button";
+    handle.setAttribute("aria-label", `색상 ${index + 1} 순서 변경`);
+    handle.title = "드래그해서 순서 변경";
+    handle.textContent = "⋮⋮";
     const title = document.createElement("h3");
     title.textContent = `색상 ${index + 1}`;
+    titleGroup.append(handle, title);
+
     const removeButton = createElement("button", "button button-delete");
     removeButton.type = "button";
     removeButton.dataset.action = "remove-art-color";
     removeButton.dataset.itemId = item.id;
     removeButton.textContent = "삭제";
-    header.append(title, removeButton);
+    header.append(titleGroup, removeButton);
 
     const controls = createElement("div", "art-color-controls");
 
