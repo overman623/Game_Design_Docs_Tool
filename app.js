@@ -31,7 +31,7 @@
   ];
 
   const SECTION_FIELDS = {
-    intro: ["name", "oneLiner", "coreConcept", "genrePlatformTarget"],
+    intro: ["name", "oneLiner", "coreConcept", "genre", "platform", "target"],
     features: ["whySpecial", "differentiationText", "differentiation", "playerExperience"],
     gameplay: ["flow", "coreSystems", "winLose", "growth"],
     images: ["mainScreen", "playScreen", "ui", "artConcept"],
@@ -44,7 +44,9 @@
     "intro.name": "게임이름",
     "intro.oneLiner": "한 줄 소개",
     "intro.coreConcept": "게임의 핵심 컨셉",
-    "intro.genrePlatformTarget": "장르 / 플랫폼 / 타겟",
+    "intro.genre": "장르",
+    "intro.platform": "플랫폼",
+    "intro.target": "타겟",
     "features.whySpecial": "왜 이 게임이 특별한가",
     "features.differentiationText": "다른 게임과 차별점",
     "features.playerExperience": "플레이어가 느끼게 될 경험",
@@ -155,7 +157,9 @@
         name: "",
         oneLiner: "",
         coreConcept: "",
-        genrePlatformTarget: "",
+        genre: "",
+        platform: "",
+        target: "",
       },
       features: {
         whySpecial: "",
@@ -221,8 +225,9 @@
         oneLiner: "빛을 모아 미로를 밝히는 2D 퍼즐 어드벤처",
         coreConcept:
           "플레이어는 어둠 속 미로에서 빛 조각을 수집하고, 그 빛으로 길을 열며 숨겨진 공간을 탐험합니다. 전투보다 ‘공간을 해석하는 재미’가 중심입니다.",
-        genrePlatformTarget:
-          "퍼즐 어드벤처 / PC·모바일 / 캐주얼·인디 게임을 좋아하는 10~30대",
+        genre: "퍼즐 어드벤처",
+        platform: "PC · 모바일",
+        target: "캐주얼·인디 게임을 좋아하는 10~30대",
       },
       features: {
         whySpecial:
@@ -828,7 +833,9 @@
       intro: () =>
         createTextSection("게임 소개", "intro", nextSectionNumber(), [
           ["coreConcept", "게임의 핵심 컨셉"],
-          ["genrePlatformTarget", "장르 / 플랫폼 / 타겟"],
+          ["genre", "장르"],
+          ["platform", "플랫폼"],
+          ["target", "타겟"],
         ]),
       features: () => createFeaturesSection(nextSectionNumber()),
       gameplay: () =>
@@ -1414,7 +1421,7 @@
     if (!source || typeof source !== "object") return fallback;
 
     return {
-      intro: sanitizeTextObject(source.intro, fallback.intro),
+      intro: sanitizeIntro(source.intro, fallback.intro),
       features: {
         whySpecial: coerceText(source.features?.whySpecial),
         differentiationText: sanitizeDifferentiationText(source.features),
@@ -1435,6 +1442,26 @@
       team: sanitizeTextObject(source.team, fallback.team),
       episode: sanitizeTextObject(source.episode, fallback.episode),
     };
+  }
+
+  function sanitizeIntro(source, fallback) {
+    const intro = sanitizeTextObject(source, fallback);
+    if (
+      !clean(intro.genre) &&
+      !clean(intro.platform) &&
+      !clean(intro.target) &&
+      source &&
+      typeof source === "object"
+    ) {
+      const legacy = coerceText(source.genrePlatformTarget);
+      if (legacy) {
+        const parts = legacy.split("/").map((part) => part.trim());
+        intro.genre = parts[0] || "";
+        intro.platform = parts[1] || "";
+        intro.target = parts.slice(2).join(" / ") || "";
+      }
+    }
+    return intro;
   }
 
   function sanitizeDifferentiationText(features) {

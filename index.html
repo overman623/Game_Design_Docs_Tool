@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260725-6" />
-    <script src="vendor/pptxgen.bundle.js?v=20260725-6" defer></script>
-    <script src="app.js?v=20260725-6" defer></script>
-    <script src="export.js?v=20260725-6" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260725-7" />
+    <script src="vendor/pptxgen.bundle.js?v=20260725-7" defer></script>
+    <script src="app.js?v=20260725-7" defer></script>
+    <script src="export.js?v=20260725-7" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -254,14 +254,34 @@
                   placeholder="이 게임이 무엇을 하는 게임인지, 핵심 재미가 무엇인지 적어 주세요."
                 ></textarea>
               </div>
-              <div class="field">
-                <label for="game-genre-target">장르 / 플랫폼 / 타겟</label>
-                <textarea
-                  id="game-genre-target"
-                  rows="3"
-                  data-field="intro.genrePlatformTarget"
-                  placeholder="예: 퍼즐 어드벤처 / PC·모바일 / 캐주얼·인디 팬"
-                ></textarea>
+              <div class="field-grid two-columns">
+                <div class="field">
+                  <label for="game-genre">장르</label>
+                  <input
+                    id="game-genre"
+                    type="text"
+                    data-field="intro.genre"
+                    placeholder="예: 퍼즐 어드벤처"
+                  />
+                </div>
+                <div class="field">
+                  <label for="game-platform">플랫폼</label>
+                  <input
+                    id="game-platform"
+                    type="text"
+                    data-field="intro.platform"
+                    placeholder="예: PC · 모바일"
+                  />
+                </div>
+                <div class="field field-span">
+                  <label for="game-target">타겟</label>
+                  <input
+                    id="game-target"
+                    type="text"
+                    data-field="intro.target"
+                    placeholder="예: 캐주얼·인디 게임을 좋아하는 10~30대"
+                  />
+                </div>
               </div>
             </div>
           </details>
