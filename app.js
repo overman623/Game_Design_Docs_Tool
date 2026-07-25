@@ -50,6 +50,7 @@
   const SECTION_FIELDS = {
     intro: [
       "name",
+      "author",
       "oneLiner",
       "coreConcept",
       "coreConceptImage",
@@ -84,6 +85,7 @@
 
   const FIELD_LABELS = {
     "intro.name": "게임이름",
+    "intro.author": "작성자",
     "intro.oneLiner": "한 줄 소개",
     "intro.coreConcept": "게임의 핵심 컨셉",
     "intro.genre": "장르",
@@ -206,6 +208,7 @@
     return {
       intro: {
         name: "",
+        author: "",
         oneLiner: "",
         coreConcept: "",
         coreConceptImage: "",
@@ -281,6 +284,7 @@
     return {
       intro: {
         name: "루멘 드리프트",
+        author: "Studio Lumen",
         oneLiner: "빛을 모아 미로를 밝히는 2D 퍼즐 어드벤처",
         coreConcept:
           "플레이어는 어둠 속 미로에서 빛 조각을 수집하고, 그 빛으로 길을 열며 숨겨진 공간을 탐험합니다. 전투보다 ‘공간을 해석하는 재미’가 중심입니다.",
@@ -1476,10 +1480,19 @@
     const copy = createElement("div", "document-topline-copy");
     const type = createElement("p", "document-type");
     const title = createElement("h1", "document-title");
+    const author = clean(state.concept.intro.author);
 
     type.textContent = "GAME CONCEPT DOCUMENT";
     title.textContent = clean(state.template.title) || "게임 컨셉 기획서";
-    copy.append(type, title);
+    copy.append(type);
+
+    if (author) {
+      const authorLine = createElement("p", "document-author");
+      authorLine.textContent = `작성 · ${author}`;
+      copy.append(authorLine);
+    }
+
+    copy.append(title);
 
     const introText = clean(state.template.intro);
     if (introText) {
@@ -2048,6 +2061,7 @@
   function sanitizeIntro(source, fallback) {
     const intro = sanitizeTextObject(source, {
       name: fallback.name,
+      author: fallback.author,
       oneLiner: fallback.oneLiner,
       coreConcept: fallback.coreConcept,
       coreConceptImage: "",
@@ -2055,6 +2069,9 @@
       platform: fallback.platform,
       target: fallback.target,
     });
+    if (!clean(intro.author) && source && typeof source === "object") {
+      intro.author = coerceText(source.teamName);
+    }
     intro.coreConceptImage = sanitizeImage(source?.coreConceptImage);
     intro.references = sanitizeReferences(source?.references);
     if (
