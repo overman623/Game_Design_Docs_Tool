@@ -1468,6 +1468,7 @@
   }
 
   function renderPreview() {
+    const previewScroll = capturePreviewScroll();
     dom.preview.replaceChildren();
     dom.preview.className = `preview-pages ${documentTemplateClasses()}`;
 
@@ -1509,6 +1510,30 @@
       paginateDocument(flowNodes);
     }
     updateCompletionProgress();
+    restorePreviewScroll(previewScroll);
+  }
+
+  function capturePreviewScroll() {
+    if (!dom.previewScroll) return { top: 0, left: 0 };
+    return {
+      top: dom.previewScroll.scrollTop,
+      left: dom.previewScroll.scrollLeft,
+    };
+  }
+
+  function restorePreviewScroll(scroll) {
+    if (!dom.previewScroll || !scroll) return;
+
+    const apply = () => {
+      const el = dom.previewScroll;
+      const maxTop = Math.max(0, el.scrollHeight - el.clientHeight);
+      const maxLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+      el.scrollTop = Math.min(scroll.top, maxTop);
+      el.scrollLeft = Math.min(scroll.left, maxLeft);
+    };
+
+    apply();
+    requestAnimationFrame(apply);
   }
 
   function isSlideLayout() {
