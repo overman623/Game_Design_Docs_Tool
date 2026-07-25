@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260725-10" />
-    <script src="vendor/pptxgen.bundle.js?v=20260725-10" defer></script>
-    <script src="app.js?v=20260725-10" defer></script>
-    <script src="export.js?v=20260725-10" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260725-11" />
+    <script src="vendor/pptxgen.bundle.js?v=20260725-11" defer></script>
+    <script src="app.js?v=20260725-11" defer></script>
+    <script src="export.js?v=20260725-11" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -444,6 +444,46 @@
                   placeholder="플레이 중·플레이 후 어떤 감정과 경험을 남기고 싶은지 적어 주세요."
                 ></textarea>
               </div>
+              <div class="field">
+                <div class="photo-upload-panel concept-image-panel">
+                  <div
+                    class="photo-input-preview concept-image-preview"
+                    data-image-preview="features.playerExperienceImage"
+                  >
+                    <span>이미지 없음</span>
+                  </div>
+                  <div class="photo-upload-copy">
+                    <strong>경험 설명 이미지</strong>
+                    <p>플레이어가 느낄 경험을 보여주는 이미지를 선택적으로 넣어 주세요.</p>
+                    <div class="photo-actions">
+                      <label
+                        class="button button-secondary photo-upload-button"
+                        for="image-player-experience"
+                      >
+                        이미지 선택
+                      </label>
+                      <input
+                        id="image-player-experience"
+                        class="visually-hidden"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        data-image-field="features.playerExperienceImage"
+                      />
+                      <button
+                        class="button button-delete"
+                        type="button"
+                        data-action="remove-image"
+                        data-image-field="features.playerExperienceImage"
+                      >
+                        이미지 삭제
+                      </button>
+                    </div>
+                    <p class="field-help" data-image-status="features.playerExperienceImage">
+                      JPG, PNG, WEBP / 8MB 이하 권장 · 선택 사항
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </details>
 
@@ -466,6 +506,46 @@
                 ></textarea>
               </div>
               <div class="field">
+                <div class="photo-upload-panel concept-image-panel">
+                  <div
+                    class="photo-input-preview concept-image-preview"
+                    data-image-preview="gameplay.flowImage"
+                  >
+                    <span>이미지 없음</span>
+                  </div>
+                  <div class="photo-upload-copy">
+                    <strong>진행 흐름 이미지</strong>
+                    <p>게임 진행 흐름을 설명하는 이미지를 선택적으로 넣어 주세요.</p>
+                    <div class="photo-actions">
+                      <label
+                        class="button button-secondary photo-upload-button"
+                        for="image-gameplay-flow"
+                      >
+                        이미지 선택
+                      </label>
+                      <input
+                        id="image-gameplay-flow"
+                        class="visually-hidden"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        data-image-field="gameplay.flowImage"
+                      />
+                      <button
+                        class="button button-delete"
+                        type="button"
+                        data-action="remove-image"
+                        data-image-field="gameplay.flowImage"
+                      >
+                        이미지 삭제
+                      </button>
+                    </div>
+                    <p class="field-help" data-image-status="gameplay.flowImage">
+                      JPG, PNG, WEBP / 8MB 이하 권장 · 선택 사항
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="field">
                 <label for="gameplay-systems">핵심 시스템</label>
                 <textarea
                   id="gameplay-systems"
@@ -473,6 +553,46 @@
                   data-field="gameplay.coreSystems"
                   placeholder="플레이의 중심이 되는 시스템을 적어 주세요."
                 ></textarea>
+              </div>
+              <div class="field">
+                <div class="photo-upload-panel concept-image-panel">
+                  <div
+                    class="photo-input-preview concept-image-preview"
+                    data-image-preview="gameplay.coreSystemsImage"
+                  >
+                    <span>이미지 없음</span>
+                  </div>
+                  <div class="photo-upload-copy">
+                    <strong>핵심 시스템 이미지</strong>
+                    <p>핵심 시스템을 설명하는 이미지를 선택적으로 넣어 주세요.</p>
+                    <div class="photo-actions">
+                      <label
+                        class="button button-secondary photo-upload-button"
+                        for="image-gameplay-systems"
+                      >
+                        이미지 선택
+                      </label>
+                      <input
+                        id="image-gameplay-systems"
+                        class="visually-hidden"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        data-image-field="gameplay.coreSystemsImage"
+                      />
+                      <button
+                        class="button button-delete"
+                        type="button"
+                        data-action="remove-image"
+                        data-image-field="gameplay.coreSystemsImage"
+                      >
+                        이미지 삭제
+                      </button>
+                    </div>
+                    <p class="field-help" data-image-status="gameplay.coreSystemsImage">
+                      JPG, PNG, WEBP / 8MB 이하 권장 · 선택 사항
+                    </p>
+                  </div>
+                </div>
               </div>
               <div class="field">
                 <label for="gameplay-winlose">승패 조건</label>
@@ -484,6 +604,46 @@
                 ></textarea>
               </div>
               <div class="field">
+                <div class="photo-upload-panel concept-image-panel">
+                  <div
+                    class="photo-input-preview concept-image-preview"
+                    data-image-preview="gameplay.winLoseImage"
+                  >
+                    <span>이미지 없음</span>
+                  </div>
+                  <div class="photo-upload-copy">
+                    <strong>승패 조건 이미지</strong>
+                    <p>승패·클리어 조건을 설명하는 이미지를 선택적으로 넣어 주세요.</p>
+                    <div class="photo-actions">
+                      <label
+                        class="button button-secondary photo-upload-button"
+                        for="image-gameplay-winlose"
+                      >
+                        이미지 선택
+                      </label>
+                      <input
+                        id="image-gameplay-winlose"
+                        class="visually-hidden"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        data-image-field="gameplay.winLoseImage"
+                      />
+                      <button
+                        class="button button-delete"
+                        type="button"
+                        data-action="remove-image"
+                        data-image-field="gameplay.winLoseImage"
+                      >
+                        이미지 삭제
+                      </button>
+                    </div>
+                    <p class="field-help" data-image-status="gameplay.winLoseImage">
+                      JPG, PNG, WEBP / 8MB 이하 권장 · 선택 사항
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="field">
                 <label for="gameplay-growth">성장 요소</label>
                 <textarea
                   id="gameplay-growth"
@@ -491,6 +651,46 @@
                   data-field="gameplay.growth"
                   placeholder="캐릭터·장비·스킬·메타 진행 등 성장 요소를 적어 주세요."
                 ></textarea>
+              </div>
+              <div class="field">
+                <div class="photo-upload-panel concept-image-panel">
+                  <div
+                    class="photo-input-preview concept-image-preview"
+                    data-image-preview="gameplay.growthImage"
+                  >
+                    <span>이미지 없음</span>
+                  </div>
+                  <div class="photo-upload-copy">
+                    <strong>성장 요소 이미지</strong>
+                    <p>성장 구조를 설명하는 이미지를 선택적으로 넣어 주세요.</p>
+                    <div class="photo-actions">
+                      <label
+                        class="button button-secondary photo-upload-button"
+                        for="image-gameplay-growth"
+                      >
+                        이미지 선택
+                      </label>
+                      <input
+                        id="image-gameplay-growth"
+                        class="visually-hidden"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        data-image-field="gameplay.growthImage"
+                      />
+                      <button
+                        class="button button-delete"
+                        type="button"
+                        data-action="remove-image"
+                        data-image-field="gameplay.growthImage"
+                      >
+                        이미지 삭제
+                      </button>
+                    </div>
+                    <p class="field-help" data-image-status="gameplay.growthImage">
+                      JPG, PNG, WEBP / 8MB 이하 권장 · 선택 사항
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </details>

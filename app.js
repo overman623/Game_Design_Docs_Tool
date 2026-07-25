@@ -25,11 +25,24 @@
   ];
 
   const IMAGE_FIELDS = [
-    { path: "intro.coreConceptImage", label: "핵심 컨셉 이미지" },
-    { path: "features.whySpecialImage", label: "특별함 설명 이미지" },
-    { path: "images.mainScreen", label: "메인 화면" },
-    { path: "images.playScreen", label: "플레이 화면" },
-    { path: "images.ui", label: "UI" },
+    { path: "intro.coreConceptImage", label: "핵심 컨셉 이미지", inputId: "image-core-concept" },
+    { path: "features.whySpecialImage", label: "특별함 설명 이미지", inputId: "image-why-special" },
+    {
+      path: "features.playerExperienceImage",
+      label: "경험 설명 이미지",
+      inputId: "image-player-experience",
+    },
+    { path: "gameplay.flowImage", label: "진행 흐름 이미지", inputId: "image-gameplay-flow" },
+    {
+      path: "gameplay.coreSystemsImage",
+      label: "핵심 시스템 이미지",
+      inputId: "image-gameplay-systems",
+    },
+    { path: "gameplay.winLoseImage", label: "승패 조건 이미지", inputId: "image-gameplay-winlose" },
+    { path: "gameplay.growthImage", label: "성장 요소 이미지", inputId: "image-gameplay-growth" },
+    { path: "images.mainScreen", label: "메인 화면", inputId: "image-main-screen" },
+    { path: "images.playScreen", label: "플레이 화면", inputId: "image-play-screen" },
+    { path: "images.ui", label: "UI", inputId: "image-ui" },
   ];
 
   const SECTION_FIELDS = {
@@ -49,8 +62,18 @@
       "differentiationText",
       "differentiation",
       "playerExperience",
+      "playerExperienceImage",
     ],
-    gameplay: ["flow", "coreSystems", "winLose", "growth"],
+    gameplay: [
+      "flow",
+      "flowImage",
+      "coreSystems",
+      "coreSystemsImage",
+      "winLose",
+      "winLoseImage",
+      "growth",
+      "growthImage",
+    ],
     images: ["mainScreen", "playScreen", "ui", "artConcept"],
     market: ["targetPlatform", "targetUsers", "postLaunch"],
     team: ["teamName", "members"],
@@ -196,12 +219,17 @@
         comparisonGames: [firstGame],
         differentiation: [createEmptyComparisonRow([firstGame.id])],
         playerExperience: "",
+        playerExperienceImage: "",
       },
       gameplay: {
         flow: "",
+        flowImage: "",
         coreSystems: "",
+        coreSystemsImage: "",
         winLose: "",
+        winLoseImage: "",
         growth: "",
+        growthImage: "",
       },
       images: {
         mainScreen: "",
@@ -309,16 +337,21 @@
         ],
         playerExperience:
           "처음엔 막막하지만, 규칙을 깨달은 순간 ‘내가 공간을 통제한다’는 쾌감을 느끼도록 설계했습니다.",
+        playerExperienceImage: "",
       },
       gameplay: {
         flow:
           "프롤로그 → 기본 빛 조작 튜토리얼 → 구역별 퍼즐 스테이지 → 보스 룸(규칙 응용) → 엔딩 분기",
+        flowImage: "",
         coreSystems:
           "빛 수집, 빛 배치, 시야 확장, 문/다리 해금, 환경 상호작용. 스테이지마다 한 가지 규칙을 추가해 조합합니다.",
+        coreSystemsImage: "",
         winLose:
           "스테이지의 출구 포털을 밝히면 클리어. 빛 에너지가 모두 소진되면 실패하며 직전 체크포인트로 돌아갑니다.",
+        winLoseImage: "",
         growth:
           "새로운 빛 속성 해금, 시야 반경 확장, 조작 콤보 해금. 메타 진행으로 코스메틱과 스토리 로그를 수집합니다.",
+        growthImage: "",
       },
       images: {
         mainScreen: "",
@@ -722,12 +755,7 @@
   }
 
   function getImageInputId(path) {
-    if (path === "intro.coreConceptImage") return "image-core-concept";
-    if (path === "features.whySpecialImage") return "image-why-special";
-    if (path === "images.mainScreen") return "image-main-screen";
-    if (path === "images.playScreen") return "image-play-screen";
-    if (path === "images.ui") return "image-ui";
-    return "";
+    return IMAGE_FIELDS.find((item) => item.path === path)?.inputId || "";
   }
 
   function getImageLabel(path) {
@@ -1120,13 +1148,7 @@
     const builders = {
       intro: () => createIntroSection(nextSectionNumber()),
       features: () => createFeaturesSection(nextSectionNumber()),
-      gameplay: () =>
-        createTextSection("게임 플레이 방식", "gameplay", nextSectionNumber(), [
-          ["flow", "게임 진행 흐름"],
-          ["coreSystems", "핵심 시스템"],
-          ["winLose", "승패 조건"],
-          ["growth", "성장 요소"],
-        ]),
+      gameplay: () => createGameplaySection(nextSectionNumber()),
       images: () => createImagesSection(nextSectionNumber()),
       market: () =>
         createTextSection("시장 진출 계획", "market", nextSectionNumber(), [
@@ -1528,31 +1550,12 @@
     const list = createElement("div", "resume-entry-list");
     const features = state.concept.features;
 
-    const whyText = clean(features.whySpecial);
-    const whyImage = sanitizeImage(features.whySpecialImage);
-    if (whyText || whyImage) {
-      const entry = createElement("article", "resume-entry concept-entry");
-      const heading = createElement("h3", "entry-title");
-      heading.textContent = "왜 이 게임이 특별한가";
-      entry.append(heading);
-
-      if (whyText) {
-        const body = createElement("p", "entry-description");
-        body.textContent = whyText;
-        entry.append(body);
-      }
-
-      if (whyImage) {
-        const figure = createElement("figure", "concept-document-image");
-        const image = document.createElement("img");
-        image.src = whyImage;
-        image.alt = "왜 이 게임이 특별한가 설명 이미지";
-        figure.append(image);
-        entry.append(figure);
-      }
-
-      list.append(entry);
-    }
+    appendTextAndImageEntry(
+      list,
+      "왜 이 게임이 특별한가",
+      features.whySpecial,
+      features.whySpecialImage,
+    );
 
     const summary = clean(features.differentiationText);
     const comparisons = nonEmptyComparisons();
@@ -1575,9 +1578,61 @@
       list.append(entry);
     }
 
-    appendTextEntry(list, "플레이어가 느끼게 될 경험", features.playerExperience);
+    appendTextAndImageEntry(
+      list,
+      "플레이어가 느끼게 될 경험",
+      features.playerExperience,
+      features.playerExperienceImage,
+    );
     section.append(list);
     return section;
+  }
+
+  function createGameplaySection(sectionNumber) {
+    const section = createDocumentSection(sectionNumber, "게임 플레이 방식");
+    const list = createElement("div", "resume-entry-list");
+    const gameplay = state.concept.gameplay;
+
+    appendTextAndImageEntry(list, "게임 진행 흐름", gameplay.flow, gameplay.flowImage);
+    appendTextAndImageEntry(
+      list,
+      "핵심 시스템",
+      gameplay.coreSystems,
+      gameplay.coreSystemsImage,
+    );
+    appendTextAndImageEntry(list, "승패 조건", gameplay.winLose, gameplay.winLoseImage);
+    appendTextAndImageEntry(list, "성장 요소", gameplay.growth, gameplay.growthImage);
+
+    section.append(list);
+    return section;
+  }
+
+  function appendTextAndImageEntry(list, label, rawText, rawImage) {
+    const text = clean(rawText);
+    const imageSource = sanitizeImage(rawImage);
+    if (!text && !imageSource) return;
+
+    const entry = createElement("article", "resume-entry concept-entry");
+    const heading = createElement("h3", "entry-title");
+    heading.textContent = label;
+    entry.append(heading);
+
+    if (text) {
+      const body = createElement("p", "entry-description");
+      body.textContent = text;
+      entry.append(body);
+    }
+
+    if (imageSource) {
+      const figure = createElement("figure", "concept-document-image");
+      const image = document.createElement("img");
+      image.src = imageSource;
+      image.alt = `${label} 이미지`;
+      figure.append(image);
+      entry.append(figure);
+    }
+
+    list.append(entry);
   }
 
   function appendTextEntry(list, label, rawValue) {
@@ -1721,10 +1776,12 @@
       if (sectionKey === "images" && field !== "artConcept") {
         return Boolean(sanitizeImage(value));
       }
-      if (sectionKey === "intro" && field === "coreConceptImage") {
-        return Boolean(sanitizeImage(value));
-      }
-      if (sectionKey === "features" && field === "whySpecialImage") {
+      if (
+        (sectionKey === "intro" ||
+          sectionKey === "features" ||
+          sectionKey === "gameplay") &&
+        String(field).endsWith("Image")
+      ) {
         return Boolean(sanitizeImage(value));
       }
       if (sectionKey === "intro" && field === "references") {
@@ -1818,9 +1875,12 @@
         whySpecialImage: sanitizeImage(source.features?.whySpecialImage),
         differentiationText: sanitizeDifferentiationText(source.features),
         playerExperience: coerceText(source.features?.playerExperience),
+        playerExperienceImage: sanitizeImage(
+          source.features?.playerExperienceImage,
+        ),
         ...sanitizeComparisonBlock(source.features),
       },
-      gameplay: sanitizeTextObject(source.gameplay, fallback.gameplay),
+      gameplay: sanitizeGameplay(source.gameplay, fallback.gameplay),
       images: {
         ...sanitizeTextObject(source.images, {
           artConcept: fallback.images.artConcept,
@@ -1833,6 +1893,19 @@
       market: sanitizeTextObject(source.market, fallback.market),
       team: sanitizeTextObject(source.team, fallback.team),
       episode: sanitizeTextObject(source.episode, fallback.episode),
+    };
+  }
+
+  function sanitizeGameplay(source, fallback) {
+    return {
+      flow: coerceText(source?.flow),
+      flowImage: sanitizeImage(source?.flowImage),
+      coreSystems: coerceText(source?.coreSystems),
+      coreSystemsImage: sanitizeImage(source?.coreSystemsImage),
+      winLose: coerceText(source?.winLose),
+      winLoseImage: sanitizeImage(source?.winLoseImage),
+      growth: coerceText(source?.growth),
+      growthImage: sanitizeImage(source?.growthImage),
     };
   }
 
