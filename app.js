@@ -25,13 +25,22 @@
   ];
 
   const IMAGE_FIELDS = [
+    { path: "intro.coreConceptImage", label: "핵심 컨셉 이미지" },
     { path: "images.mainScreen", label: "메인 화면" },
     { path: "images.playScreen", label: "플레이 화면" },
     { path: "images.ui", label: "UI" },
   ];
 
   const SECTION_FIELDS = {
-    intro: ["name", "oneLiner", "coreConcept", "genre", "platform", "target"],
+    intro: [
+      "name",
+      "oneLiner",
+      "coreConcept",
+      "coreConceptImage",
+      "genre",
+      "platform",
+      "target",
+    ],
     features: ["whySpecial", "differentiationText", "differentiation", "playerExperience"],
     gameplay: ["flow", "coreSystems", "winLose", "growth"],
     images: ["mainScreen", "playScreen", "ui", "artConcept"],
@@ -157,6 +166,7 @@
         name: "",
         oneLiner: "",
         coreConcept: "",
+        coreConceptImage: "",
         genre: "",
         platform: "",
         target: "",
@@ -225,6 +235,7 @@
         oneLiner: "빛을 모아 미로를 밝히는 2D 퍼즐 어드벤처",
         coreConcept:
           "플레이어는 어둠 속 미로에서 빛 조각을 수집하고, 그 빛으로 길을 열며 숨겨진 공간을 탐험합니다. 전투보다 ‘공간을 해석하는 재미’가 중심입니다.",
+        coreConceptImage: "",
         genre: "퍼즐 어드벤처",
         platform: "PC · 모바일",
         target: "캐주얼·인디 게임을 좋아하는 10~30대",
@@ -588,6 +599,7 @@
   }
 
   function getImageInputId(path) {
+    if (path === "intro.coreConceptImage") return "image-core-concept";
     if (path === "images.mainScreen") return "image-main-screen";
     if (path === "images.playScreen") return "image-play-screen";
     if (path === "images.ui") return "image-ui";
@@ -830,13 +842,7 @@
     const nextSectionNumber = () => String(sectionNumber++).padStart(2, "0");
 
     const builders = {
-      intro: () =>
-        createTextSection("게임 소개", "intro", nextSectionNumber(), [
-          ["coreConcept", "게임의 핵심 컨셉"],
-          ["genre", "장르"],
-          ["platform", "플랫폼"],
-          ["target", "타겟"],
-        ]),
+      intro: () => createIntroSection(nextSectionNumber()),
       features: () => createFeaturesSection(nextSectionNumber()),
       gameplay: () =>
         createTextSection("게임 플레이 방식", "gameplay", nextSectionNumber(), [
@@ -1143,6 +1149,45 @@
     return header;
   }
 
+  function createIntroSection(sectionNumber) {
+    const section = createDocumentSection(sectionNumber, "게임 소개");
+    const list = createElement("div", "resume-entry-list");
+    const intro = state.concept.intro;
+
+    const conceptText = clean(intro.coreConcept);
+    const conceptImage = sanitizeImage(intro.coreConceptImage);
+    if (conceptText || conceptImage) {
+      const entry = createElement("article", "resume-entry concept-entry");
+      const heading = createElement("h3", "entry-title");
+      heading.textContent = "게임의 핵심 컨셉";
+      entry.append(heading);
+
+      if (conceptText) {
+        const body = createElement("p", "entry-description");
+        body.textContent = conceptText;
+        entry.append(body);
+      }
+
+      if (conceptImage) {
+        const figure = createElement("figure", "concept-document-image");
+        const image = document.createElement("img");
+        image.src = conceptImage;
+        image.alt = "핵심 컨셉 이미지";
+        figure.append(image);
+        entry.append(figure);
+      }
+
+      list.append(entry);
+    }
+
+    appendTextEntry(list, "장르", intro.genre);
+    appendTextEntry(list, "플랫폼", intro.platform);
+    appendTextEntry(list, "타겟", intro.target);
+
+    section.append(list);
+    return section;
+  }
+
   function createTextSection(titleText, sectionKey, sectionNumber, fields) {
     const section = createDocumentSection(sectionNumber, titleText);
     const list = createElement("div", "resume-entry-list");
@@ -1339,6 +1384,9 @@
       if (sectionKey === "images" && field !== "artConcept") {
         return Boolean(sanitizeImage(value));
       }
+      if (sectionKey === "intro" && field === "coreConceptImage") {
+        return Boolean(sanitizeImage(value));
+      }
       if (sectionKey === "features" && field === "differentiation") {
         return nonEmptyComparisons().length > 0;
       }
@@ -1446,6 +1494,7 @@
 
   function sanitizeIntro(source, fallback) {
     const intro = sanitizeTextObject(source, fallback);
+    intro.coreConceptImage = sanitizeImage(source?.coreConceptImage);
     if (
       !clean(intro.genre) &&
       !clean(intro.platform) &&
