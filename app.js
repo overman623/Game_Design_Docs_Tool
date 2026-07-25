@@ -7,7 +7,9 @@
   };
 
   const LAYOUT_NOTES = {
-    standard: "기본형: 발표와 공유에 무난하게 쓸 수 있는 구성입니다.",
+    slides:
+      "슬라이드형: 16:9 발표용으로 항목을 장표처럼 나눕니다. PPTX도 와이드스크린으로 저장됩니다.",
+    standard: "기본형: A4 문서로 발표와 공유에 무난하게 쓸 수 있는 구성입니다.",
     compact: "간결형: 내용이 많을 때 여백을 줄여 더 촘촘하게 보여줍니다.",
     review: "발표 검토형: 핵심 문장과 차별점이 빠르게 보이도록 강조합니다.",
     timeline: "스토리형: 개발 과정과 기획 흐름을 이야기처럼 읽기 쉽게 보여줍니다.",
@@ -262,7 +264,7 @@
       ),
       title: "게임 컨셉 기획서",
       intro: "작성한 내용을 바탕으로 정리한 게임 컨셉 기획서입니다.",
-      layout: "standard",
+      layout: "slides",
       fontSize: "medium",
       pageMargin: "preset",
       sectionSpacing: "preset",
@@ -1182,8 +1184,60 @@
       flowNodes.push(createEmptyDocumentMessage());
     }
 
-    paginateDocument(flowNodes);
+    if (isSlideLayout()) {
+      paginateAsPresentationSlides(flowNodes);
+    } else {
+      paginateDocument(flowNodes);
+    }
     updateCompletionProgress();
+  }
+
+  function isSlideLayout() {
+    return state.template.layout === "slides";
+  }
+
+  function paginateAsPresentationSlides(flowNodes) {
+    const context = { pages: [], current: null };
+
+    flowNodes.forEach((node) => {
+      if (node.classList?.contains("document-section")) {
+        const sourceList = Array.from(node.children).find(
+          (child) => !child.classList.contains("document-section-title"),
+        );
+        const entries = sourceList ? Array.from(sourceList.children) : [];
+
+        if (entries.length === 0) {
+          context.current = createDocumentPage(context, context.pages.length + 1);
+          context.current.content.append(node);
+          return;
+        }
+
+        entries.forEach((entry) => {
+          context.current = createDocumentPage(context, context.pages.length + 1);
+          const shell = createSectionShell(node, false);
+          shell.list.append(entry);
+          context.current.content.append(shell.section);
+
+          if (pageIsOverflowing(context.current.content)) {
+            entry.classList.add("oversized-page-block");
+          }
+        });
+        return;
+      }
+
+      context.current = createDocumentPage(context, context.pages.length + 1);
+      context.current.content.append(node);
+      if (pageIsOverflowing(context.current.content)) {
+        node.classList.add("oversized-page-block");
+      }
+    });
+
+    if (context.pages.length === 0) {
+      context.current = createDocumentPage(context, 1);
+      context.current.content.append(createEmptyDocumentMessage());
+    }
+
+    updatePageNumbers(context.pages);
   }
 
   function schedulePreviewPagination() {
@@ -1216,7 +1270,7 @@
 
     page.dataset.pageNumber = String(pageNumber);
 
-    if (pageNumber > 1) {
+    if (pageNumber > 1 && !isSlideLayout()) {
       content.append(createRunningHeader());
     }
 
@@ -1384,16 +1438,21 @@
 
   function updatePageNumbers(pages) {
     const totalPages = Math.max(1, pages.length);
+    const slide = isSlideLayout();
 
     pages.forEach((pageState, index) => {
       pageState.footer.textContent = `${index + 1} / ${totalPages}`;
       pageState.page.setAttribute(
         "aria-label",
-        `A4 문서 ${index + 1}쪽, 전체 ${totalPages}쪽`,
+        slide
+          ? `발표 슬라이드 ${index + 1}장, 전체 ${totalPages}장`
+          : `A4 문서 ${index + 1}쪽, 전체 ${totalPages}쪽`,
       );
     });
 
-    dom.pageCount.textContent = `A4 · ${totalPages}쪽`;
+    dom.pageCount.textContent = slide
+      ? `16:9 · ${totalPages}장`
+      : `A4 · ${totalPages}쪽`;
     applyPreviewScale(pages);
   }
 
@@ -1410,7 +1469,10 @@
   }
 
   function createDocumentTopline() {
-    const header = createElement("header", "document-topline");
+    const header = createElement(
+      "header",
+      isSlideLayout() ? "document-topline document-title-slide" : "document-topline",
+    );
     const copy = createElement("div", "document-topline-copy");
     const type = createElement("p", "document-type");
     const title = createElement("h1", "document-title");
@@ -1478,39 +1540,97 @@
       list.append(entry);
     }
 
-    appendTextEntry(list, "장르", intro.genre);
-    appendTextEntry(list, "플랫폼", intro.platform);
-    appendTextEntry(list, "타겟", intro.target);
+    if (isSlideLayout()) {
+      const genre = clean(intro.genre);
+      const platform = clean(intro.platform);
+      const target = clean(intro.target);
+      if (genre || platform || target) {
+        const entry = createElement("article", "resume-entry concept-entry slide-meta-entry");
+        const heading = createElement("h3", "entry-title");
+        heading.textContent = "장르 · 플랫폼 · 타겟";
+        entry.append(heading);
+
+        const metaGrid = createElement("div", "slide-meta-grid");
+        [
+          ["장르", genre],
+          ["플랫폼", platform],
+          ["타겟", target],
+        ].forEach(([label, value]) => {
+          if (!value) return;
+          const item = createElement("div", "slide-meta-item");
+          const labelEl = createElement("p", "slide-meta-label");
+          const valueEl = createElement("p", "slide-meta-value");
+          labelEl.textContent = label;
+          valueEl.textContent = value;
+          item.append(labelEl, valueEl);
+          metaGrid.append(item);
+        });
+        entry.append(metaGrid);
+        list.append(entry);
+      }
+    } else {
+      appendTextEntry(list, "장르", intro.genre);
+      appendTextEntry(list, "플랫폼", intro.platform);
+      appendTextEntry(list, "타겟", intro.target);
+    }
 
     const references = nonEmptyReferences();
     if (references.length > 0) {
-      const entry = createElement("article", "resume-entry concept-entry");
-      const heading = createElement("h3", "entry-title");
-      heading.textContent = "레퍼런스 게임";
-      entry.append(heading);
+      if (isSlideLayout()) {
+        references.forEach((item) => {
+          const entry = createElement("article", "resume-entry concept-entry");
+          const heading = createElement("h3", "entry-title");
+          const nameText = clean(item.name) || "레퍼런스 게임";
+          heading.textContent = `레퍼런스 · ${nameText}`;
+          entry.append(heading);
 
-      const referenceList = createElement("div", "reference-document-list");
-      references.forEach((item) => {
-        const card = createElement("article", "reference-document-item");
-        const name = createElement("p", "entry-description reference-document-name");
-        name.textContent = clean(item.name);
-        card.append(name);
+          if (clean(item.name)) {
+            const name = createElement("p", "entry-description reference-document-name");
+            name.textContent = clean(item.name);
+            entry.append(name);
+          }
 
-        const imageSource = sanitizeImage(item.image);
-        if (imageSource) {
-          const figure = createElement("figure", "concept-document-image");
-          const image = document.createElement("img");
-          image.src = imageSource;
-          image.alt = `${clean(item.name)} 레퍼런스 이미지`;
-          figure.append(image);
-          card.append(figure);
-        }
+          const imageSource = sanitizeImage(item.image);
+          if (imageSource) {
+            const figure = createElement("figure", "concept-document-image");
+            const image = document.createElement("img");
+            image.src = imageSource;
+            image.alt = `${nameText} 레퍼런스 이미지`;
+            figure.append(image);
+            entry.append(figure);
+          }
 
-        referenceList.append(card);
-      });
+          list.append(entry);
+        });
+      } else {
+        const entry = createElement("article", "resume-entry concept-entry");
+        const heading = createElement("h3", "entry-title");
+        heading.textContent = "레퍼런스 게임";
+        entry.append(heading);
 
-      entry.append(referenceList);
-      list.append(entry);
+        const referenceList = createElement("div", "reference-document-list");
+        references.forEach((item) => {
+          const card = createElement("article", "reference-document-item");
+          const name = createElement("p", "entry-description reference-document-name");
+          name.textContent = clean(item.name);
+          card.append(name);
+
+          const imageSource = sanitizeImage(item.image);
+          if (imageSource) {
+            const figure = createElement("figure", "concept-document-image");
+            const image = document.createElement("img");
+            image.src = imageSource;
+            image.alt = `${clean(item.name)} 레퍼런스 이미지`;
+            figure.append(image);
+            card.append(figure);
+          }
+
+          referenceList.append(card);
+        });
+
+        entry.append(referenceList);
+        list.append(entry);
+      }
     }
 
     section.append(list);
@@ -1560,22 +1680,38 @@
     const summary = clean(features.differentiationText);
     const comparisons = nonEmptyComparisons();
     if (summary || comparisons.length > 0) {
-      const entry = createElement("article", "resume-entry concept-entry");
-      const heading = createElement("h3", "entry-title");
-      heading.textContent = "다른 게임과 차별점";
-      entry.append(heading);
+      if (isSlideLayout() && summary && comparisons.length > 0) {
+        const summaryEntry = createElement("article", "resume-entry concept-entry");
+        const summaryHeading = createElement("h3", "entry-title");
+        const summaryBody = createElement("p", "entry-description");
+        summaryHeading.textContent = "다른 게임과 차별점";
+        summaryBody.textContent = summary;
+        summaryEntry.append(summaryHeading, summaryBody);
+        list.append(summaryEntry);
 
-      if (summary) {
-        const body = createElement("p", "entry-description");
-        body.textContent = summary;
-        entry.append(body);
+        const tableEntry = createElement("article", "resume-entry concept-entry");
+        const tableHeading = createElement("h3", "entry-title");
+        tableHeading.textContent = "비교표";
+        tableEntry.append(tableHeading, createComparisonDocumentTable(comparisons));
+        list.append(tableEntry);
+      } else {
+        const entry = createElement("article", "resume-entry concept-entry");
+        const heading = createElement("h3", "entry-title");
+        heading.textContent = "다른 게임과 차별점";
+        entry.append(heading);
+
+        if (summary) {
+          const body = createElement("p", "entry-description");
+          body.textContent = summary;
+          entry.append(body);
+        }
+
+        if (comparisons.length > 0) {
+          entry.append(createComparisonDocumentTable(comparisons));
+        }
+
+        list.append(entry);
       }
-
-      if (comparisons.length > 0) {
-        entry.append(createComparisonDocumentTable(comparisons));
-      }
-
-      list.append(entry);
     }
 
     appendTextAndImageEntry(
@@ -2054,6 +2190,7 @@
     if (!source || typeof source !== "object") return fallback;
 
     const validLayouts = [
+      "slides",
       "standard",
       "compact",
       "review",

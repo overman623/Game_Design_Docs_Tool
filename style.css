@@ -1882,6 +1882,184 @@ summary:focus-visible,
   gap: 5px;
 }
 
+/* 슬라이드형 (16:9) */
+
+.document-sheet.layout-slides {
+  --document-base: 15pt;
+  --section-gap: 18px;
+  --entry-gap: 14px;
+  width: 1280px;
+  height: 720px;
+  min-height: 720px;
+  padding: 40px 56px 28px;
+  line-height: 1.45;
+}
+
+.document-sheet.layout-slides.font-small {
+  --document-base: 13.5pt;
+}
+
+.document-sheet.layout-slides.font-medium {
+  --document-base: 15pt;
+}
+
+.document-sheet.layout-slides.font-large {
+  --document-base: 17pt;
+}
+
+.document-sheet.layout-slides.manual-margin-narrow {
+  padding: 28px 40px 22px;
+}
+
+.document-sheet.layout-slides.manual-margin-normal {
+  padding: 40px 56px 28px;
+}
+
+.document-sheet.layout-slides.manual-margin-wide {
+  padding: 48px 72px 34px;
+}
+
+.layout-slides .document-page-footer {
+  min-height: 18px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top-color: #d8dde3;
+  font-size: 0.62em;
+}
+
+.layout-slides .document-page-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-slides .document-title-slide {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: center;
+  margin: 0;
+  padding: 0 8px 12px;
+  border: 0;
+}
+
+.layout-slides .document-title-slide .document-topline-copy {
+  width: 100%;
+  max-width: 920px;
+}
+
+.layout-slides .document-type {
+  margin-bottom: 10px;
+  letter-spacing: 0.14em;
+  font-size: 0.78em;
+}
+
+.layout-slides .document-title {
+  margin: 0 0 18px;
+  font-size: 2.55em;
+  line-height: 1.2;
+}
+
+.layout-slides .document-intro {
+  max-width: 42em;
+  margin-bottom: 22px;
+  font-size: 1.05em;
+  color: #4a525c;
+}
+
+.layout-slides .concept-identity {
+  margin-top: 8px;
+  padding-top: 18px;
+  border-top: 2px solid #c5ccd4;
+}
+
+.layout-slides .identity-name {
+  margin: 0 0 8px;
+  font-size: 1.85em;
+  line-height: 1.2;
+}
+
+.layout-slides .identity-summary {
+  margin: 0;
+  font-size: 1.12em;
+  color: #3d454e;
+}
+
+.layout-slides .document-section {
+  height: 100%;
+  min-height: 0;
+}
+
+.layout-slides .document-section-title {
+  margin-bottom: 18px;
+  font-size: 1.05em;
+}
+
+.layout-slides .entry-title {
+  margin-bottom: 12px;
+  font-size: 1.55em;
+  line-height: 1.25;
+}
+
+.layout-slides .entry-description {
+  font-size: 1.05em;
+  line-height: 1.5;
+}
+
+.layout-slides .concept-document-image {
+  margin-top: 14px;
+  max-height: 380px;
+}
+
+.layout-slides .concept-document-image img {
+  max-height: 380px;
+  object-fit: contain;
+}
+
+.layout-slides .slide-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.layout-slides .slide-meta-item {
+  padding: 16px 18px;
+  border: 1px solid #d5dbe2;
+  background: #f7f8fa;
+}
+
+.layout-slides .slide-meta-label {
+  margin: 0 0 8px;
+  color: #6a7380;
+  font-size: 0.78em;
+  letter-spacing: 0.04em;
+}
+
+.layout-slides .slide-meta-value {
+  margin: 0;
+  font-size: 1.12em;
+  line-height: 1.4;
+  color: #1c2128;
+}
+
+.layout-slides .comparison-table-wrap {
+  margin-top: 8px;
+}
+
+.layout-slides .empty-document {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .layout-slides .slide-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* 직접 편집 설정 */
 
 .document-sheet.manual-margin-narrow {
@@ -2106,6 +2284,11 @@ summary:focus-visible,
   margin: 0;
 }
 
+@page slide-page {
+  size: 13.333in 7.5in;
+  margin: 0;
+}
+
 @media print {
   html,
   body {
@@ -2149,6 +2332,25 @@ summary:focus-visible,
     zoom: 1 !important;
   }
 
+  .preview-pages.layout-slides,
+  .preview-pages.layout-slides .preview-column,
+  .preview-pages.layout-slides .preview-scroll,
+  .workspace:has(.document-sheet.layout-slides) {
+    width: 13.333in;
+  }
+
+  body:has(.document-sheet.layout-slides) {
+    width: 13.333in;
+  }
+
+  body:has(.document-sheet.layout-slides) .workspace,
+  body:has(.document-sheet.layout-slides) .preview-column,
+  body:has(.document-sheet.layout-slides) .preview-scroll,
+  body:has(.document-sheet.layout-slides) .preview-pages {
+    width: 13.333in;
+    min-width: 13.333in;
+  }
+
   .document-sheet,
   .document-sheet.layout-compact,
   .document-sheet.layout-review,
@@ -2157,6 +2359,18 @@ summary:focus-visible,
     width: 210mm;
     height: 297mm;
     min-height: 297mm;
+    margin: 0;
+    box-shadow: none;
+    animation: none;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .document-sheet.layout-slides {
+    page: slide-page;
+    width: 13.333in;
+    height: 7.5in;
+    min-height: 7.5in;
     margin: 0;
     box-shadow: none;
     animation: none;

@@ -7,6 +7,8 @@
   const SVG_NS = "http://www.w3.org/2000/svg";
   const PPTX_PAGE_WIDTH = 8.2677165;
   const PPTX_PAGE_HEIGHT = 11.692913;
+  const PPTX_SLIDE_WIDTH = 13.333333;
+  const PPTX_SLIDE_HEIGHT = 7.5;
 
   if (!pptxButton || !svgButton) return;
 
@@ -22,13 +24,17 @@
       const pages = await serializeDocumentPages();
       const pptx = new window.PptxGenJS();
       const title = getDocumentName();
+      const slideMode = pages[0]?.slideMode;
+      const layoutWidth = slideMode ? PPTX_SLIDE_WIDTH : PPTX_PAGE_WIDTH;
+      const layoutHeight = slideMode ? PPTX_SLIDE_HEIGHT : PPTX_PAGE_HEIGHT;
+      const layoutName = slideMode ? "WIDESCREEN_16x9" : "A4";
 
       pptx.defineLayout({
-        name: "A4",
-        width: PPTX_PAGE_WIDTH,
-        height: PPTX_PAGE_HEIGHT,
+        name: layoutName,
+        width: layoutWidth,
+        height: layoutHeight,
       });
-      pptx.layout = "A4";
+      pptx.layout = layoutName;
       pptx.author = "게임 컨셉 기획서 만들기";
       pptx.company = "Game Concept Document Builder";
       pptx.subject = "게임 컨셉 기획서";
@@ -38,27 +44,32 @@
       pages.forEach((page, index) => {
         const slide = pptx.addSlide();
         slide.background = { color: "FFFFFF" };
-        addEditablePageToSlide(slide, pptx, page, index);
+        addEditablePageToSlide(slide, pptx, page, index, layoutWidth, layoutHeight);
       });
 
       await pptx.writeFile({
-        fileName: `${safeFileName(title)}-A4.pptx`,
+        fileName: `${safeFileName(title)}-${slideMode ? "16x9" : "A4"}.pptx`,
         compression: true,
       });
 
-      return `수정 가능한 PPTX ${pages.length}장을 저장했어요.`;
+      return slideMode
+        ? `16:9 발표용 PPTX ${pages.length}장을 저장했어요.`
+        : `수정 가능한 PPTX ${pages.length}장을 저장했어요.`;
     });
   }
 
   async function exportFigmaSvg() {
     await withExportState("Figma용 SVG를 만들고 있어요…", async () => {
       const pages = await serializeDocumentPages();
-      const svg = combinePagesForFigma(pages);
+      const slideMode = pages[0]?.slideMode;
+      const svg = combinePagesForFigma(pages, slideMode);
       downloadBlob(
         new Blob([svg], { type: "image/svg+xml;charset=utf-8" }),
         `${safeFileName(getDocumentName())}-Figma.svg`,
       );
-      return `Figma SVG에 A4 ${pages.length}쪽을 담았어요.`;
+      return slideMode
+        ? `Figma SVG에 16:9 슬라이드 ${pages.length}장을 담았어요.`
+        : `Figma SVG에 A4 ${pages.length}쪽을 담았어요.`;
     });
   }
 
@@ -108,6 +119,7 @@
       images: [],
       texts: [],
     };
+    const slideMode = page.classList.contains("layout-slides");
 
     const context = {
       page,
@@ -150,7 +162,7 @@
       `</svg>`,
     ].join("");
 
-    return { width, height, content, svg, editable };
+    return { width, height, content, svg, editable, slideMode };
   }
 
   function appendElementShape(element, context, output) {
@@ -391,15 +403,17 @@
     );
   }
 
-  function combinePagesForFigma(pages) {
+  function combinePagesForFigma(pages, slideMode = false) {
     const gap = 48;
     const width = Math.max(...pages.map((page) => page.width));
     const height = pages.reduce((sum, page) => sum + page.height, 0) + gap * (pages.length - 1);
+    const label = slideMode ? "Slide" : "A4";
+    const labelKo = slideMode ? "장" : "쪽";
     let offsetY = 0;
     const groups = pages.map((page, index) => {
       const group = [
-        `<g id="A4-page-${index + 1}" data-page="${index + 1}" transform="translate(0 ${round(offsetY)})">`,
-        `<title>A4 ${index + 1}쪽</title>`,
+        `<g id="${label}-page-${index + 1}" data-page="${index + 1}" transform="translate(0 ${round(offsetY)})">`,
+        `<title>${label} ${index + 1}${labelKo}</title>`,
         page.content,
         `</g>`,
       ].join("");
@@ -413,15 +427,15 @@
       ` width="${round(width)}" height="${round(height)}"`,
       ` viewBox="0 0 ${round(width)} ${round(height)}">`,
       `<title>${escapeXml(getDocumentName())} · Figma 편집용</title>`,
-      `<metadata>A4 pages exported from Game Concept Document Builder</metadata>`,
+      `<metadata>${slideMode ? "16:9 slides" : "A4 pages"} exported from Game Concept Document Builder</metadata>`,
       groups.join(""),
       `</svg>`,
     ].join("");
   }
 
-  function addEditablePageToSlide(slide, pptx, page, pageIndex) {
-    const xToInches = (value) => (value / page.width) * PPTX_PAGE_WIDTH;
-    const yToInches = (value) => (value / page.height) * PPTX_PAGE_HEIGHT;
+  function addEditablePageToSlide(slide, pptx, page, pageIndex, layoutWidth, layoutHeight) {
+    const xToInches = (value) => (value / page.width) * layoutWidth;
+    const yToInches = (value) => (value / page.height) * layoutHeight;
     const pageLabel = pageIndex + 1;
 
     page.editable.shapes.forEach((shape, index) => {

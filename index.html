@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260725-11" />
-    <script src="vendor/pptxgen.bundle.js?v=20260725-11" defer></script>
-    <script src="app.js?v=20260725-11" defer></script>
-    <script src="export.js?v=20260725-11" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260725-12" />
+    <script src="vendor/pptxgen.bundle.js?v=20260725-12" defer></script>
+    <script src="app.js?v=20260725-12" defer></script>
+    <script src="export.js?v=20260725-12" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -142,11 +142,12 @@
                 <div class="field">
                   <label for="layout-preset">레이아웃</label>
                   <select id="layout-preset" data-template-field="layout">
-                    <option value="standard">기본형</option>
-                    <option value="compact">간결형</option>
-                    <option value="review">발표 검토형</option>
-                    <option value="timeline">스토리형</option>
-                    <option value="portfolio">비주얼 강조형</option>
+                    <option value="slides">슬라이드형 (16:9)</option>
+                    <option value="standard">기본형 (A4)</option>
+                    <option value="compact">간결형 (A4)</option>
+                    <option value="review">발표 검토형 (A4)</option>
+                    <option value="timeline">스토리형 (A4)</option>
+                    <option value="portfolio">비주얼 강조형 (A4)</option>
                   </select>
                 </div>
                 <div class="field">
@@ -946,7 +947,7 @@
             </p>
             <p class="export-status" id="export-status" aria-live="polite"></p>
           </div>
-          <span class="paper-label" id="page-count">A4 · 1쪽</span>
+          <span class="paper-label" id="page-count">16:9 · 1장</span>
         </div>
 
         <div class="preview-scroll">
@@ -1006,8 +1007,8 @@
           <div>
             <h3>오른쪽 문서를 확인하세요</h3>
             <p>
-              작성 내용은 A4 페이지에 자동으로 나뉘어요. 빈 항목은 문서에 나오지
-              않으며, 페이지 아래에서 전체 쪽수를 확인할 수 있어요.
+              슬라이드형(16:9)을 고르면 발표용 장표로, A4 레이아웃을 고르면
+              문서형으로 자동 나뉩니다. 빈 항목은 나오지 않아요.
             </p>
           </div>
         </section>
@@ -1016,8 +1017,8 @@
           <div>
             <h3>필요한 파일로 저장하세요</h3>
             <p>
-              PDF는 제출·공유용, PPTX는 문구·선·이미지를 각각 수정할 수 있는 A4
-              슬라이드, Figma SVG는 추가 디자인 편집용으로 활용할 수 있어요.
+              PDF는 제출·공유용, PPTX는 선택한 레이아웃(16:9 또는 A4)으로
+              수정 가능한 슬라이드, Figma SVG는 추가 디자인 편집용입니다.
             </p>
           </div>
         </section>
