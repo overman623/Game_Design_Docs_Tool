@@ -32,7 +32,7 @@
 
   const SECTION_FIELDS = {
     intro: ["name", "oneLiner", "coreConcept", "genrePlatformTarget"],
-    features: ["whySpecial", "differentiation", "playerExperience"],
+    features: ["whySpecial", "differentiationText", "differentiation", "playerExperience"],
     gameplay: ["flow", "coreSystems", "winLose", "growth"],
     images: ["mainScreen", "playScreen", "ui", "artConcept"],
     market: ["targetPlatform", "targetUsers", "postLaunch"],
@@ -46,7 +46,7 @@
     "intro.coreConcept": "게임의 핵심 컨셉",
     "intro.genrePlatformTarget": "장르 / 플랫폼 / 타겟",
     "features.whySpecial": "왜 이 게임이 특별한가",
-    "features.differentiation": "다른 게임과 차별점",
+    "features.differentiationText": "다른 게임과 차별점",
     "features.playerExperience": "플레이어가 느끼게 될 경험",
     "gameplay.flow": "게임 진행 흐름",
     "gameplay.coreSystems": "핵심 시스템",
@@ -66,6 +66,8 @@
 
   const dom = {
     form: document.querySelector("#document-form"),
+    comparisonHead: document.querySelector("#comparison-head"),
+    comparisonRows: document.querySelector("#comparison-rows"),
     previewScroll: document.querySelector(".preview-scroll"),
     preview: document.querySelector("#document-preview"),
     pageCount: document.querySelector("#page-count"),
@@ -83,6 +85,62 @@
     guideDialog: document.querySelector("#guide-dialog"),
   };
 
+  function createId(prefix) {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return `${prefix}-${crypto.randomUUID()}`;
+    }
+    return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  function createEmptyComparisonGame(name = "") {
+    return {
+      id: createId("game"),
+      name,
+    };
+  }
+
+  function createEmptyComparisonRow(gameIds) {
+    const values = {};
+    const ids = Array.isArray(gameIds) ? gameIds : getComparisonGameIds();
+    ids.forEach((gameId) => {
+      values[gameId] = "";
+    });
+    return {
+      id: createId("compare"),
+      aspect: "",
+      values,
+      ourGame: "",
+    };
+  }
+
+  function getComparisonGameIds() {
+    try {
+      return (state?.concept?.features?.comparisonGames || []).map(
+        (game) => game.id,
+      );
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function syncComparisonRowValues() {
+    const gameIds = getComparisonGameIds();
+    state.concept.features.differentiation = (
+      state.concept.features.differentiation || []
+    ).map((row) => {
+      const values = {};
+      gameIds.forEach((gameId) => {
+        values[gameId] = coerceText(row.values?.[gameId] ?? "");
+      });
+      return {
+        id: row.id || createId("compare"),
+        aspect: coerceText(row.aspect),
+        values,
+        ourGame: coerceText(row.ourGame),
+      };
+    });
+  }
+
   let state = {
     concept: createDefaultConcept(),
     template: createDefaultTemplate(),
@@ -91,6 +149,7 @@
   let paginationFrame = null;
 
   function createDefaultConcept() {
+    const firstGame = createEmptyComparisonGame("비교 대상 게임 1");
     return {
       intro: {
         name: "",
@@ -100,7 +159,9 @@
       },
       features: {
         whySpecial: "",
-        differentiation: "",
+        differentiationText: "",
+        comparisonGames: [firstGame],
+        differentiation: [createEmptyComparisonRow([firstGame.id])],
         playerExperience: "",
       },
       gameplay: {
@@ -151,6 +212,9 @@
   }
 
   function createSampleConcept() {
+    const mazeGame = createEmptyComparisonGame("미로 탈출작");
+    const actionGame = createEmptyComparisonGame("액션 어드벤처");
+
     return {
       intro: {
         name: "루멘 드리프트",
@@ -163,8 +227,38 @@
       features: {
         whySpecial:
           "적과 싸우기보다 빛의 배치와 시야를 조작해 맵을 재구성하는 퍼즐 구조가 핵심입니다. 같은 공간도 빛의 위치에 따라 전혀 다른 경로가 됩니다.",
-        differentiation:
-          "일반적인 미로 탈출작과 달리, 맵을 외우는 것이 아니라 빛 규칙을 이해해 공간을 다시 디자인하는 플레이를 강조합니다.",
+        differentiationText:
+          "일반적인 미로 탈출작·액션 어드벤처와 비교해, 맵 암기나 전투보다 빛 규칙을 발견하고 공간을 다시 디자인하는 플레이를 강조합니다.",
+        comparisonGames: [mazeGame, actionGame],
+        differentiation: [
+          {
+            id: createId("compare"),
+            aspect: "핵심 플레이",
+            values: {
+              [mazeGame.id]: "맵 암기와 길찾기 중심",
+              [actionGame.id]: "전투·회피 중심의 진행",
+            },
+            ourGame: "빛 규칙으로 공간을 재구성하는 퍼즐",
+          },
+          {
+            id: createId("compare"),
+            aspect: "전투 비중",
+            values: {
+              [mazeGame.id]: "전투가 거의 없음",
+              [actionGame.id]: "전투가 진행의 핵심",
+            },
+            ourGame: "전투보다 시야·배치 조작이 핵심",
+          },
+          {
+            id: createId("compare"),
+            aspect: "학습 방식",
+            values: {
+              [mazeGame.id]: "맵 구조를 반복 학습",
+              [actionGame.id]: "조작·콤보를 길게 설명",
+            },
+            ourGame: "스테이지마다 규칙 하나를 발견하게 설계",
+          },
+        ],
         playerExperience:
           "처음엔 막막하지만, 규칙을 깨달은 순간 ‘내가 공간을 통제한다’는 쾌감을 느끼도록 설계했습니다.",
       },
@@ -249,6 +343,13 @@
 
     if (target.matches("[data-field]")) {
       setPath(state.concept, target.dataset.field, target.value);
+      if (target.dataset.field === "intro.name") {
+        renderComparisonTable();
+      }
+    } else if (target.matches("[data-comparison-field]")) {
+      updateComparisonRow(target);
+    } else if (target.matches("[data-comparison-game-name]")) {
+      updateComparisonGameName(target);
     } else if (target.matches("[data-template-field]")) {
       state.template[target.dataset.templateField] = target.value;
       updatePresetNote();
@@ -263,11 +364,76 @@
     scheduleSave();
   }
 
+  function updateComparisonRow(input) {
+    const row = state.concept.features.differentiation.find(
+      (item) => item.id === input.dataset.itemId,
+    );
+    if (!row) return;
+
+    const field = input.dataset.comparisonField;
+    if (field === "aspect" || field === "ourGame") {
+      row[field] = input.value;
+      return;
+    }
+
+    if (field === "gameValue") {
+      if (!row.values || typeof row.values !== "object") row.values = {};
+      row.values[input.dataset.gameId] = input.value;
+    }
+  }
+
+  function updateComparisonGameName(input) {
+    const game = state.concept.features.comparisonGames.find(
+      (item) => item.id === input.dataset.gameId,
+    );
+    if (!game) return;
+    game.name = input.value;
+  }
+
   function handleFormClick(event) {
     const button = event.target.closest("button[data-action]");
     if (!button) return;
 
     const action = button.dataset.action;
+
+    if (action === "add-comparison") {
+      state.concept.features.differentiation.push(createEmptyComparisonRow());
+      renderComparisonTable();
+      focusLatestComparisonRow();
+    }
+
+    if (action === "remove-comparison") {
+      const rows = state.concept.features.differentiation;
+      if (rows.length <= 1) {
+        rows[0] = createEmptyComparisonRow();
+      } else {
+        state.concept.features.differentiation = rows.filter(
+          (item) => item.id !== button.dataset.itemId,
+        );
+      }
+      renderComparisonTable();
+    }
+
+    if (action === "add-comparison-game") {
+      const nextIndex = state.concept.features.comparisonGames.length + 1;
+      const game = createEmptyComparisonGame(`비교 대상 게임 ${nextIndex}`);
+      state.concept.features.comparisonGames.push(game);
+      syncComparisonRowValues();
+      renderComparisonTable();
+    }
+
+    if (action === "remove-comparison-game") {
+      const games = state.concept.features.comparisonGames;
+      if (games.length <= 1) {
+        games[0] = createEmptyComparisonGame("비교 대상 게임 1");
+      } else {
+        state.concept.features.comparisonGames = games.filter(
+          (item) => item.id !== button.dataset.gameId,
+        );
+      }
+      syncComparisonRowValues();
+      renderComparisonTable();
+    }
 
     if (action === "remove-image") {
       setPath(state.concept, button.dataset.imageField, "");
@@ -452,7 +618,148 @@
     });
 
     renderAllImagePreviews();
+    renderComparisonTable();
     renderSectionOrderControls();
+  }
+
+  function renderComparisonTable() {
+    renderComparisonHead();
+    renderComparisonRows();
+  }
+
+  function getOurGameLabel() {
+    return clean(state.concept.intro.name) || "우리 게임";
+  }
+
+  function renderComparisonHead() {
+    if (!dom.comparisonHead) return;
+
+    const games = state.concept.features.comparisonGames || [];
+    const ourGameLabel = getOurGameLabel();
+    const tr = document.createElement("tr");
+
+    const aspectTh = document.createElement("th");
+    aspectTh.scope = "col";
+    aspectTh.textContent = "비교 항목";
+    tr.append(aspectTh);
+
+    games.forEach((game, index) => {
+      const th = document.createElement("th");
+      th.scope = "col";
+      th.className = "comparison-game-col";
+
+      const wrap = createElement("div", "comparison-game-header");
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = game.name || "";
+      input.placeholder = `비교 대상 게임 ${index + 1}`;
+      input.dataset.comparisonGameName = "";
+      input.dataset.gameId = game.id;
+      input.setAttribute("aria-label", `비교 대상 게임 ${index + 1} 이름`);
+
+      const removeButton = createElement("button", "button button-delete");
+      removeButton.type = "button";
+      removeButton.dataset.action = "remove-comparison-game";
+      removeButton.dataset.gameId = game.id;
+      removeButton.textContent = "열 삭제";
+      removeButton.disabled = games.length <= 1;
+
+      wrap.append(input, removeButton);
+      th.append(wrap);
+      tr.append(th);
+    });
+
+    const ourTh = document.createElement("th");
+    ourTh.scope = "col";
+    ourTh.textContent = ourGameLabel;
+    tr.append(ourTh);
+
+    const actionTh = document.createElement("th");
+    actionTh.scope = "col";
+    actionTh.className = "comparison-actions-col";
+    const hidden = createElement("span", "visually-hidden");
+    hidden.textContent = "행 삭제";
+    actionTh.append(hidden);
+    tr.append(actionTh);
+
+    dom.comparisonHead.replaceChildren(tr);
+  }
+
+  function renderComparisonRows() {
+    if (!dom.comparisonRows) return;
+
+    const games = state.concept.features.comparisonGames || [];
+    const rows = state.concept.features.differentiation || [];
+
+    dom.comparisonRows.replaceChildren(
+      ...rows.map((item) => {
+        const tr = document.createElement("tr");
+        tr.dataset.itemId = item.id;
+        tr.append(createComparisonCell(item, "aspect", "예: 핵심 플레이"));
+
+        games.forEach((game) => {
+          tr.append(
+            createComparisonGameValueCell(
+              item,
+              game.id,
+              `${clean(game.name) || "비교 게임"}의 방식`,
+            ),
+          );
+        });
+
+        tr.append(
+          createComparisonCell(
+            item,
+            "ourGame",
+            `예: ${getOurGameLabel()}의 방식`,
+          ),
+        );
+
+        const actionCell = document.createElement("td");
+        actionCell.className = "comparison-actions-col";
+        const removeButton = createElement("button", "button button-delete");
+        removeButton.type = "button";
+        removeButton.dataset.action = "remove-comparison";
+        removeButton.dataset.itemId = item.id;
+        removeButton.textContent = "삭제";
+        actionCell.append(removeButton);
+        tr.append(actionCell);
+
+        return tr;
+      }),
+    );
+  }
+
+  function createComparisonCell(item, field, placeholder) {
+    const cell = document.createElement("td");
+    const input = document.createElement("textarea");
+    input.rows = 2;
+    input.placeholder = placeholder;
+    input.value = item[field] || "";
+    input.dataset.comparisonField = field;
+    input.dataset.itemId = item.id;
+    cell.append(input);
+    return cell;
+  }
+
+  function createComparisonGameValueCell(item, gameId, placeholder) {
+    const cell = document.createElement("td");
+    const input = document.createElement("textarea");
+    input.rows = 2;
+    input.placeholder = placeholder;
+    input.value = item.values?.[gameId] || "";
+    input.dataset.comparisonField = "gameValue";
+    input.dataset.itemId = item.id;
+    input.dataset.gameId = gameId;
+    cell.append(input);
+    return cell;
+  }
+
+  function focusLatestComparisonRow() {
+    requestAnimationFrame(() => {
+      const lastRow = dom.comparisonRows?.querySelector("tr:last-child textarea");
+      lastRow?.focus();
+    });
   }
 
   function renderSectionOrderControls() {
@@ -523,12 +830,7 @@
           ["coreConcept", "게임의 핵심 컨셉"],
           ["genrePlatformTarget", "장르 / 플랫폼 / 타겟"],
         ]),
-      features: () =>
-        createTextSection("게임의 특징", "features", nextSectionNumber(), [
-          ["whySpecial", "왜 이 게임이 특별한가"],
-          ["differentiation", "다른 게임과 차별점"],
-          ["playerExperience", "플레이어가 느끼게 될 경험"],
-        ]),
+      features: () => createFeaturesSection(nextSectionNumber()),
       gameplay: () =>
         createTextSection("게임 플레이 방식", "gameplay", nextSectionNumber(), [
           ["flow", "게임 진행 흐름"],
@@ -856,6 +1158,104 @@
     return section;
   }
 
+  function createFeaturesSection(sectionNumber) {
+    const section = createDocumentSection(sectionNumber, "게임의 특징");
+    const list = createElement("div", "resume-entry-list");
+    const features = state.concept.features;
+
+    appendTextEntry(list, "왜 이 게임이 특별한가", features.whySpecial);
+
+    const summary = clean(features.differentiationText);
+    const comparisons = nonEmptyComparisons();
+    if (summary || comparisons.length > 0) {
+      const entry = createElement("article", "resume-entry concept-entry");
+      const heading = createElement("h3", "entry-title");
+      heading.textContent = "다른 게임과 차별점";
+      entry.append(heading);
+
+      if (summary) {
+        const body = createElement("p", "entry-description");
+        body.textContent = summary;
+        entry.append(body);
+      }
+
+      if (comparisons.length > 0) {
+        entry.append(createComparisonDocumentTable(comparisons));
+      }
+
+      list.append(entry);
+    }
+
+    appendTextEntry(list, "플레이어가 느끼게 될 경험", features.playerExperience);
+    section.append(list);
+    return section;
+  }
+
+  function appendTextEntry(list, label, rawValue) {
+    const value = clean(rawValue);
+    if (!value) return;
+
+    const entry = createElement("article", "resume-entry concept-entry");
+    const heading = createElement("h3", "entry-title");
+    const body = createElement("p", "entry-description");
+    heading.textContent = label;
+    body.textContent = value;
+    entry.append(heading, body);
+    list.append(entry);
+  }
+
+  function createComparisonDocumentTable(rows) {
+    const games = state.concept.features.comparisonGames || [];
+    const table = createElement("table", "comparison-document-table");
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+
+    const headers = [
+      "비교 항목",
+      ...games.map(
+        (game, index) => clean(game.name) || `비교 대상 게임 ${index + 1}`,
+      ),
+      getOurGameLabel(),
+    ];
+
+    headers.forEach((label) => {
+      const th = document.createElement("th");
+      th.scope = "col";
+      th.textContent = label;
+      headRow.append(th);
+    });
+    thead.append(headRow);
+
+    const tbody = document.createElement("tbody");
+    rows.forEach((item) => {
+      const tr = document.createElement("tr");
+      const cells = [
+        item.aspect,
+        ...games.map((game) => item.values?.[game.id] || ""),
+        item.ourGame,
+      ];
+      cells.forEach((value) => {
+        const td = document.createElement("td");
+        td.textContent = clean(value);
+        tr.append(td);
+      });
+      tbody.append(tr);
+    });
+
+    table.append(thead, tbody);
+    return table;
+  }
+
+  function nonEmptyComparisons() {
+    const games = state.concept.features.comparisonGames || [];
+    return (state.concept.features.differentiation || []).filter((item) => {
+      const hasGameValue = games.some((game) =>
+        clean(item.values?.[game.id]),
+      );
+      return clean(item.aspect) || hasGameValue || clean(item.ourGame);
+    });
+  }
+
   function createImagesSection(sectionNumber) {
     const section = createDocumentSection(sectionNumber, "게임 이미지");
     const list = createElement("div", "resume-entry-list");
@@ -931,6 +1331,12 @@
       const value = data[field];
       if (sectionKey === "images" && field !== "artConcept") {
         return Boolean(sanitizeImage(value));
+      }
+      if (sectionKey === "features" && field === "differentiation") {
+        return nonEmptyComparisons().length > 0;
+      }
+      if (sectionKey === "features" && field === "differentiationText") {
+        return Boolean(clean(value));
       }
       return Boolean(clean(value));
     });
@@ -1009,7 +1415,12 @@
 
     return {
       intro: sanitizeTextObject(source.intro, fallback.intro),
-      features: sanitizeTextObject(source.features, fallback.features),
+      features: {
+        whySpecial: coerceText(source.features?.whySpecial),
+        differentiationText: sanitizeDifferentiationText(source.features),
+        playerExperience: coerceText(source.features?.playerExperience),
+        ...sanitizeComparisonBlock(source.features),
+      },
       gameplay: sanitizeTextObject(source.gameplay, fallback.gameplay),
       images: {
         ...sanitizeTextObject(source.images, {
@@ -1024,6 +1435,100 @@
       team: sanitizeTextObject(source.team, fallback.team),
       episode: sanitizeTextObject(source.episode, fallback.episode),
     };
+  }
+
+  function sanitizeDifferentiationText(features) {
+    if (!features || typeof features !== "object") return "";
+    if (typeof features.differentiationText === "string") {
+      return coerceText(features.differentiationText);
+    }
+    // 예전 버전에서 차별점이 문자열만 있던 경우 본문으로 이전
+    if (
+      typeof features.differentiation === "string" &&
+      clean(features.differentiation)
+    ) {
+      return coerceText(features.differentiation);
+    }
+    return "";
+  }
+
+  function sanitizeComparisonBlock(features) {
+    const legacyRows = Array.isArray(features?.differentiation)
+      ? features.differentiation
+      : [];
+    const hasLegacyOtherGame = legacyRows.some(
+      (item) => item && typeof item === "object" && "otherGame" in item,
+    );
+
+    let comparisonGames = sanitizeComparisonGames(features?.comparisonGames);
+    if (
+      (!features?.comparisonGames || !Array.isArray(features.comparisonGames)) &&
+      hasLegacyOtherGame
+    ) {
+      comparisonGames = [createEmptyComparisonGame("비교 대상 게임 1")];
+    }
+
+    const gameIds = comparisonGames.map((game) => game.id);
+    const differentiation = sanitizeComparisons(
+      features?.differentiation,
+      gameIds,
+    );
+
+    return { comparisonGames, differentiation };
+  }
+
+  function sanitizeComparisonGames(source) {
+    if (!Array.isArray(source) || source.length === 0) {
+      return [createEmptyComparisonGame("비교 대상 게임 1")];
+    }
+
+    return source
+      .map((item, index) => {
+        if (!item || typeof item !== "object") return null;
+        return {
+          id: coerceText(item.id) || createId("game"),
+          name: coerceText(item.name) || `비교 대상 게임 ${index + 1}`,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function sanitizeComparisons(source, gameIds) {
+    const ids =
+      Array.isArray(gameIds) && gameIds.length
+        ? gameIds
+        : [createId("game")];
+
+    if (typeof source === "string") {
+      return [createEmptyComparisonRow(ids)];
+    }
+
+    if (!Array.isArray(source)) return [createEmptyComparisonRow(ids)];
+
+    const rows = source
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const values = {};
+        ids.forEach((gameId, index) => {
+          if (item.values && typeof item.values === "object") {
+            values[gameId] = coerceText(item.values[gameId]);
+          } else if (index === 0) {
+            values[gameId] = coerceText(item.otherGame);
+          } else {
+            values[gameId] = "";
+          }
+        });
+
+        return {
+          id: coerceText(item.id) || createId("compare"),
+          aspect: coerceText(item.aspect),
+          values,
+          ourGame: coerceText(item.ourGame),
+        };
+      })
+      .filter(Boolean);
+
+    return rows.length ? rows : [createEmptyComparisonRow(ids)];
   }
 
   function sanitizeTemplate(source, fallback) {
