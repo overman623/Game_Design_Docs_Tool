@@ -1329,18 +1329,8 @@
           ["targetUsers", "목표 유저"],
           ["postLaunch", "출시 이후 계획"],
         ]),
-      team: () =>
-        createTextSection("팀 소개 및 역할", "team", nextSectionNumber(), [
-          ["teamName", "팀명"],
-          ["members", "팀인원 설명"],
-        ]),
-      episode: () =>
-        createTextSection("개발 과정 에피소드", "episode", nextSectionNumber(), [
-          ["motivation", "왜 이 게임을 만들게 되었는지"],
-          ["trials", "시행착오"],
-          ["redesign", "리디자인 과정"],
-          ["futureGoals", "앞으로의 목표"],
-        ]),
+      team: () => createTeamSection(nextSectionNumber()),
+      episode: () => createEpisodeSection(nextSectionNumber()),
     };
 
     state.template.sectionOrder.forEach((key) => {
@@ -1883,6 +1873,72 @@
     return section;
   }
 
+  function appendSlideFieldBlock(entry, label, value) {
+    const text = clean(value);
+    if (!text) return;
+
+    const block = createElement("div", "slide-field-block");
+    const heading = createElement("h3", "entry-title");
+    const body = createElement("p", "entry-description");
+    heading.textContent = label;
+    body.textContent = text;
+    block.append(heading, body);
+    entry.append(block);
+  }
+
+  function shouldBundleMotivationWithTeam() {
+    return isSlideLayout() && Boolean(state.template.visibility.team);
+  }
+
+  function createTeamSection(sectionNumber) {
+    if (!isSlideLayout()) {
+      return createTextSection("팀 소개 및 역할", "team", sectionNumber, [
+        ["teamName", "팀명"],
+        ["members", "팀인원 설명"],
+      ]);
+    }
+
+    const section = createDocumentSection(sectionNumber, "팀 소개 및 역할");
+    const list = createElement("div", "resume-entry-list");
+    const teamName = clean(state.concept.team.teamName);
+    const members = clean(state.concept.team.members);
+    const motivation = clean(state.concept.episode.motivation);
+
+    if (teamName || members || motivation) {
+      const entry = createElement(
+        "article",
+        "resume-entry concept-entry slide-combined-entry",
+      );
+      appendSlideFieldBlock(entry, "팀명", teamName);
+      appendSlideFieldBlock(entry, "팀인원 설명", members);
+      appendSlideFieldBlock(entry, "왜 이 게임을 만들게 되었는지", motivation);
+      list.append(entry);
+    }
+
+    section.append(list);
+    return section;
+  }
+
+  function createEpisodeSection(sectionNumber) {
+    const fields = [
+      ["motivation", "왜 이 게임을 만들게 되었는지"],
+      ["trials", "시행착오"],
+      ["redesign", "리디자인 과정"],
+      ["futureGoals", "앞으로의 목표"],
+    ];
+
+    const visibleFields = shouldBundleMotivationWithTeam()
+      ? fields.filter(([field]) => field !== "motivation")
+      : fields;
+
+    return createTextSection(
+      "개발 과정 에피소드",
+      "episode",
+      sectionNumber,
+      visibleFields,
+    );
+  }
+
   function createFeaturesSection(sectionNumber) {
     const section = createDocumentSection(sectionNumber, "게임의 특징");
     const list = createElement("div", "resume-entry-list");
@@ -2125,7 +2181,19 @@
     const data = state.concept[sectionKey];
     if (!data) return false;
 
+    if (sectionKey === "team" && shouldBundleMotivationWithTeam()) {
+      if (clean(state.concept.episode?.motivation)) return true;
+    }
+
     return SECTION_FIELDS[sectionKey].some((field) => {
+      if (
+        sectionKey === "episode" &&
+        field === "motivation" &&
+        shouldBundleMotivationWithTeam()
+      ) {
+        return false;
+      }
+
       const value = data[field];
       if (sectionKey === "images" && field !== "artConcept") {
         return Boolean(sanitizeImage(value));
