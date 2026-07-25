@@ -43,7 +43,9 @@
 
       pages.forEach((page, index) => {
         const slide = pptx.addSlide();
-        slide.background = { color: "FFFFFF" };
+        slide.background = {
+          color: pptxColor(page.backgroundColor || "#FFFFFF"),
+        };
         addEditablePageToSlide(slide, pptx, page, index, layoutWidth, layoutHeight);
       });
 
@@ -120,6 +122,9 @@
       texts: [],
     };
     const slideMode = page.classList.contains("layout-slides");
+    const pageBackground = parseCssColor(getComputedStyle(page).backgroundColor);
+    const backgroundColor =
+      pageBackground.opacity > 0 ? pageBackground.color : "#ffffff";
 
     const context = {
       page,
@@ -132,7 +137,9 @@
       editable,
     };
 
-    shapes.push(`<rect width="${round(width)}" height="${round(height)}" fill="#ffffff"/>`);
+    shapes.push(
+      `<rect width="${round(width)}" height="${round(height)}" fill="${backgroundColor}"/>`,
+    );
 
     page.querySelectorAll("*").forEach((element) => {
       if (!isVisibleElement(element)) return;
@@ -162,7 +169,7 @@
       `</svg>`,
     ].join("");
 
-    return { width, height, content, svg, editable, slideMode };
+    return { width, height, content, svg, editable, slideMode, backgroundColor };
   }
 
   function appendElementShape(element, context, output) {

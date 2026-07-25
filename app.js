@@ -280,6 +280,7 @@
       intro: "작성한 내용을 바탕으로 정리한 게임 컨셉 기획서입니다.",
       layout: "slides",
       fontSize: "medium",
+      theme: "neutral",
       imageFit: "contain",
       pageMargin: "preset",
       sectionSpacing: "preset",
@@ -2436,6 +2437,7 @@
     const classes = [
       `layout-${state.template.layout || "standard"}`,
       `font-${state.template.fontSize || "medium"}`,
+      `theme-${state.template.theme || "neutral"}`,
       `image-fit-${state.template.imageFit || "contain"}`,
     ];
 
@@ -2704,6 +2706,7 @@
       "portfolio",
     ];
     const validFontSizes = ["small", "medium", "large"];
+    const validThemes = ["neutral", "graphite"];
     const validImageFits = ["contain", "cover16x9", "cover1x1"];
     const validPageMargins = ["preset", "narrow", "normal", "wide"];
     const validSectionSpacings = ["preset", "tight", "normal", "relaxed"];
@@ -2729,6 +2732,9 @@
       fontSize: validFontSizes.includes(source.fontSize)
         ? source.fontSize
         : fallback.fontSize,
+      theme: validThemes.includes(source.theme)
+        ? source.theme
+        : fallback.theme,
       imageFit: validImageFits.includes(source.imageFit)
         ? source.imageFit
         : fallback.imageFit,

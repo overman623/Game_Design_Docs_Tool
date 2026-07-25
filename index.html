@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260726-01" />
-    <script src="vendor/pptxgen.bundle.js?v=20260726-01" defer></script>
-    <script src="app.js?v=20260726-01" defer></script>
-    <script src="export.js?v=20260726-01" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260726-03" />
+    <script src="vendor/pptxgen.bundle.js?v=20260726-03" defer></script>
+    <script src="app.js?v=20260726-03" defer></script>
+    <script src="export.js?v=20260726-03" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -170,6 +170,16 @@
                     <option value="medium">보통</option>
                     <option value="large">크게</option>
                   </select>
+                </div>
+                <div class="field field-span">
+                  <label for="document-theme">문서 테마</label>
+                  <select id="document-theme" data-template-field="theme">
+                    <option value="neutral">기본</option>
+                    <option value="graphite">다크</option>
+                  </select>
+                  <p class="field-help">
+                    문서 미리보기·PDF·PPTX·SVG의 배경과 강조색이 함께 바뀝니다.
+                  </p>
                 </div>
                 <div class="field field-span">
                   <label for="image-fit">이미지 표시</label>
