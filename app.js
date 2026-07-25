@@ -50,7 +50,6 @@
   const SECTION_FIELDS = {
     intro: [
       "name",
-      "author",
       "oneLiner",
       "coreConcept",
       "coreConceptImage",
@@ -85,7 +84,6 @@
 
   const FIELD_LABELS = {
     "intro.name": "게임이름",
-    "intro.author": "작성자",
     "intro.oneLiner": "한 줄 소개",
     "intro.coreConcept": "게임의 핵심 컨셉",
     "intro.genre": "장르",
@@ -208,7 +206,6 @@
     return {
       intro: {
         name: "",
-        author: "",
         oneLiner: "",
         coreConcept: "",
         coreConceptImage: "",
@@ -266,6 +263,7 @@
         SECTION_DEFINITIONS.map((section) => [section.key, true]),
       ),
       title: "게임 컨셉 기획서",
+      author: "",
       intro: "작성한 내용을 바탕으로 정리한 게임 컨셉 기획서입니다.",
       layout: "slides",
       fontSize: "medium",
@@ -284,7 +282,6 @@
     return {
       intro: {
         name: "루멘 드리프트",
-        author: "Studio Lumen",
         oneLiner: "빛을 모아 미로를 밝히는 2D 퍼즐 어드벤처",
         coreConcept:
           "플레이어는 어둠 속 미로에서 빛 조각을 수집하고, 그 빛으로 길을 열며 숨겨진 공간을 탐험합니다. 전투보다 ‘공간을 해석하는 재미’가 중심입니다.",
@@ -1480,7 +1477,7 @@
     const copy = createElement("div", "document-topline-copy");
     const type = createElement("p", "document-type");
     const title = createElement("h1", "document-title");
-    const author = clean(state.concept.intro.author);
+    const author = clean(state.template.author);
 
     type.textContent = "GAME CONCEPT DOCUMENT";
     title.textContent = clean(state.template.title) || "게임 컨셉 기획서";
@@ -1992,16 +1989,20 @@
     };
 
     try {
-      return {
-        concept: sanitizeConcept(
-          parseStoredJson(STORAGE_KEYS.concept),
-          defaults.concept,
-        ),
-        template: sanitizeTemplate(
-          parseStoredJson(STORAGE_KEYS.template),
-          defaults.template,
-        ),
-      };
+      const rawConcept = parseStoredJson(STORAGE_KEYS.concept);
+      const concept = sanitizeConcept(rawConcept, defaults.concept);
+      const template = sanitizeTemplate(
+        parseStoredJson(STORAGE_KEYS.template),
+        defaults.template,
+      );
+
+      if (!clean(template.author) && rawConcept?.intro) {
+        template.author =
+          coerceText(rawConcept.intro.author) ||
+          coerceText(rawConcept.intro.teamName);
+      }
+
+      return { concept, template };
     } catch (error) {
       console.warn("저장 데이터를 불러오지 못해 기본값을 사용합니다.", error);
       return defaults;
@@ -2061,7 +2062,6 @@
   function sanitizeIntro(source, fallback) {
     const intro = sanitizeTextObject(source, {
       name: fallback.name,
-      author: fallback.author,
       oneLiner: fallback.oneLiner,
       coreConcept: fallback.coreConcept,
       coreConceptImage: "",
@@ -2069,9 +2069,6 @@
       platform: fallback.platform,
       target: fallback.target,
     });
-    if (!clean(intro.author) && source && typeof source === "object") {
-      intro.author = coerceText(source.teamName);
-    }
     intro.coreConceptImage = sanitizeImage(source?.coreConceptImage);
     intro.references = sanitizeReferences(source?.references);
     if (
@@ -2231,6 +2228,7 @@
     return {
       visibility,
       title: coerceText(source.title) || fallback.title,
+      author: coerceText(source.author) || fallback.author,
       intro: coerceText(source.intro) || fallback.intro,
       layout: validLayouts.includes(source.layout)
         ? source.layout
@@ -2340,6 +2338,7 @@
     }
 
     state.concept = createSampleConcept();
+    state.template.author = "Studio Lumen";
     syncFormFromState();
     renderPreview();
     IMAGE_FIELDS.forEach((item) => {

@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260725-15" />
-    <script src="vendor/pptxgen.bundle.js?v=20260725-15" defer></script>
-    <script src="app.js?v=20260725-15" defer></script>
-    <script src="export.js?v=20260725-15" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260725-16" />
+    <script src="vendor/pptxgen.bundle.js?v=20260725-16" defer></script>
+    <script src="app.js?v=20260725-16" defer></script>
+    <script src="export.js?v=20260725-16" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -130,6 +130,16 @@
               </div>
 
               <div class="field">
+                <label for="document-author">작성자</label>
+                <input
+                  id="document-author"
+                  type="text"
+                  data-template-field="author"
+                  placeholder="예: Studio Lumen / 홍길동"
+                />
+              </div>
+
+              <div class="field">
                 <label for="document-intro">문서 소개 문구</label>
                 <textarea
                   id="document-intro"
@@ -224,7 +234,7 @@
               <span class="summary-number">01</span>
               <span>
                 <strong>게임 소개</strong>
-                <small>작성자, 게임 이름, 한 줄 소개, 핵심 컨셉부터 적어 보세요.</small>
+                <small>이름, 한 줄 소개, 핵심 컨셉부터 적어 보세요.</small>
               </span>
             </summary>
             <div class="section-body">
@@ -235,15 +245,6 @@
                   type="text"
                   data-field="intro.name"
                   placeholder="예: 루멘 드리프트"
-                />
-              </div>
-              <div class="field">
-                <label for="intro-author">작성자</label>
-                <input
-                  id="intro-author"
-                  type="text"
-                  data-field="intro.author"
-                  placeholder="예: Studio Lumen / 홍길동"
                 />
               </div>
               <div class="field">
