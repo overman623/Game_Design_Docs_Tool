@@ -1507,8 +1507,38 @@
     const list = createElement("div", "resume-entry-list");
     const intro = state.concept.intro;
 
-    appendTextEntry(list, "게임이름", intro.name);
-    appendTextEntry(list, "한 줄 소개", intro.oneLiner);
+    if (isSlideLayout()) {
+      const gameName = clean(intro.name);
+      const oneLiner = clean(intro.oneLiner);
+      if (gameName || oneLiner) {
+        const entry = createElement(
+          "article",
+          "resume-entry concept-entry slide-combined-entry",
+        );
+        if (gameName) {
+          const nameBlock = createElement("div", "slide-field-block");
+          const nameHeading = createElement("h3", "entry-title");
+          const nameBody = createElement("p", "entry-description");
+          nameHeading.textContent = "게임이름";
+          nameBody.textContent = gameName;
+          nameBlock.append(nameHeading, nameBody);
+          entry.append(nameBlock);
+        }
+        if (oneLiner) {
+          const lineBlock = createElement("div", "slide-field-block");
+          const lineHeading = createElement("h3", "entry-title");
+          const lineBody = createElement("p", "entry-description");
+          lineHeading.textContent = "한 줄 소개";
+          lineBody.textContent = oneLiner;
+          lineBlock.append(lineHeading, lineBody);
+          entry.append(lineBlock);
+        }
+        list.append(entry);
+      }
+    } else {
+      appendTextEntry(list, "게임이름", intro.name);
+      appendTextEntry(list, "한 줄 소개", intro.oneLiner);
+    }
 
     const conceptText = clean(intro.coreConcept);
     const conceptImage = sanitizeImage(intro.coreConceptImage);
@@ -1573,29 +1603,43 @@
     const references = nonEmptyReferences();
     if (references.length > 0) {
       if (isSlideLayout()) {
-        references.forEach((item) => {
+        chunkItems(references, 3).forEach((chunk, index) => {
           const entry = createElement("article", "resume-entry concept-entry");
           const heading = createElement("h3", "entry-title");
-          const nameText = clean(item.name) || "레퍼런스 게임";
-          heading.textContent = `레퍼런스 · ${nameText}`;
+          heading.textContent =
+            index === 0 ? "레퍼런스 게임" : "레퍼런스 게임 (계속)";
           entry.append(heading);
 
-          if (clean(item.name)) {
-            const name = createElement("p", "entry-description reference-document-name");
-            name.textContent = clean(item.name);
-            entry.append(name);
-          }
+          const referenceList = createElement(
+            "div",
+            "reference-document-list slide-reference-grid",
+          );
+          chunk.forEach((item) => {
+            const card = createElement("article", "reference-document-item");
+            const nameText = clean(item.name);
+            if (nameText) {
+              const name = createElement(
+                "p",
+                "entry-description reference-document-name",
+              );
+              name.textContent = nameText;
+              card.append(name);
+            }
 
-          const imageSource = sanitizeImage(item.image);
-          if (imageSource) {
-            const figure = createElement("figure", "concept-document-image");
-            const image = document.createElement("img");
-            image.src = imageSource;
-            image.alt = `${nameText} 레퍼런스 이미지`;
-            figure.append(image);
-            entry.append(figure);
-          }
+            const imageSource = sanitizeImage(item.image);
+            if (imageSource) {
+              const figure = createElement("figure", "concept-document-image");
+              const image = document.createElement("img");
+              image.src = imageSource;
+              image.alt = `${nameText || "레퍼런스"} 레퍼런스 이미지`;
+              figure.append(image);
+              card.append(figure);
+            }
 
+            referenceList.append(card);
+          });
+
+          entry.append(referenceList);
           list.append(entry);
         });
       } else {
@@ -1631,6 +1675,14 @@
 
     section.append(list);
     return section;
+  }
+
+  function chunkItems(items, size) {
+    const chunks = [];
+    for (let index = 0; index < items.length; index += size) {
+      chunks.push(items.slice(index, index + size));
+    }
+    return chunks;
   }
 
   function nonEmptyReferences() {

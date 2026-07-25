@@ -2054,6 +2054,36 @@ summary:focus-visible,
   color: #1c2128;
 }
 
+.layout-slides .slide-combined-entry {
+  display: grid;
+  gap: 22px;
+}
+
+.layout-slides .slide-field-block .entry-title {
+  margin-bottom: 8px;
+}
+
+.layout-slides .slide-reference-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.layout-slides .slide-reference-grid .reference-document-item {
+  display: grid;
+  gap: 8px;
+}
+
+.layout-slides .slide-reference-grid .concept-document-image {
+  margin-top: 0;
+  max-height: 240px;
+}
+
+.layout-slides .slide-reference-grid .concept-document-image img {
+  max-height: 240px;
+  width: 100%;
+}
+
 .layout-slides .comparison-table-wrap {
   margin-top: 8px;
 }
