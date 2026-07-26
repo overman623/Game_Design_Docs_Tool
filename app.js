@@ -30,6 +30,12 @@
   ];
 
   const MAX_CORE_CONCEPT_IMAGES = 3;
+  const IMAGE_FIT_OPTIONS = [
+    { value: "contain", label: "비율 유지 (전체 표시)" },
+    { value: "cover16x9", label: "16:9로 채우기 (잘림)" },
+    { value: "cover1x1", label: "정사각형으로 채우기 (잘림)" },
+  ];
+  const VALID_IMAGE_FITS = IMAGE_FIT_OPTIONS.map((item) => item.value);
 
   const IMAGE_FIELDS = [
     { path: "features.whySpecialImage", label: "특별함 설명 이미지", inputId: "image-why-special" },
@@ -151,11 +157,19 @@
     return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 
+  function createEmptyImageAsset(fit = "contain") {
+    return {
+      image: "",
+      fit: normalizeImageFit(fit),
+    };
+  }
+
   function createEmptyReference() {
     return {
       id: createId("reference"),
       name: "",
       image: "",
+      fit: "contain",
     };
   }
 
@@ -163,6 +177,7 @@
     return {
       id: createId("core-image"),
       image: "",
+      fit: "contain",
     };
   }
 
@@ -253,27 +268,27 @@
       },
       features: {
         whySpecial: "",
-        whySpecialImage: "",
+        whySpecialImage: createEmptyImageAsset(),
         differentiationText: "",
         comparisonGames: [firstGame],
         differentiation: [createEmptyComparisonRow([firstGame.id])],
         playerExperience: "",
-        playerExperienceImage: "",
+        playerExperienceImage: createEmptyImageAsset(),
       },
       gameplay: {
         flow: "",
-        flowImage: "",
+        flowImage: createEmptyImageAsset(),
         coreSystems: "",
-        coreSystemsImage: "",
+        coreSystemsImage: createEmptyImageAsset(),
         winLose: "",
-        winLoseImage: "",
+        winLoseImage: createEmptyImageAsset(),
         growth: "",
-        growthImage: "",
+        growthImage: createEmptyImageAsset(),
       },
       images: {
-        mainScreen: "",
-        playScreen: "",
-        ui: "",
+        mainScreen: createEmptyImageAsset(),
+        playScreen: createEmptyImageAsset(),
+        ui: createEmptyImageAsset(),
         artConcept: "",
         artColors: [],
       },
@@ -306,7 +321,6 @@
       layout: "slides",
       fontSize: "medium",
       theme: "neutral",
-      imageFit: "contain",
       pageMargin: "preset",
       sectionSpacing: "preset",
       headingStyle: "preset",
@@ -334,18 +348,20 @@
             id: createId("reference"),
             name: "Monument Valley",
             image: "",
+            fit: "contain",
           },
           {
             id: createId("reference"),
             name: "Ori and the Blind Forest",
             image: "",
+            fit: "contain",
           },
         ],
       },
       features: {
         whySpecial:
           "적과 싸우기보다 빛의 배치와 시야를 조작해 맵을 재구성하는 퍼즐 구조가 핵심입니다. 같은 공간도 빛의 위치에 따라 전혀 다른 경로가 됩니다.",
-        whySpecialImage: "",
+        whySpecialImage: createEmptyImageAsset(),
         differentiationText:
           "일반적인 미로 탈출작·액션 어드벤처와 비교해, 맵 암기나 전투보다 빛 규칙을 발견하고 공간을 다시 디자인하는 플레이를 강조합니다.",
         comparisonGames: [mazeGame, actionGame],
@@ -380,26 +396,26 @@
         ],
         playerExperience:
           "처음엔 막막하지만, 규칙을 깨달은 순간 ‘내가 공간을 통제한다’는 쾌감을 느끼도록 설계했습니다.",
-        playerExperienceImage: "",
+        playerExperienceImage: createEmptyImageAsset(),
       },
       gameplay: {
         flow:
           "프롤로그 → 기본 빛 조작 튜토리얼 → 구역별 퍼즐 스테이지 → 보스 룸(규칙 응용) → 엔딩 분기",
-        flowImage: "",
+        flowImage: createEmptyImageAsset(),
         coreSystems:
           "빛 수집, 빛 배치, 시야 확장, 문/다리 해금, 환경 상호작용. 스테이지마다 한 가지 규칙을 추가해 조합합니다.",
-        coreSystemsImage: "",
+        coreSystemsImage: createEmptyImageAsset(),
         winLose:
           "스테이지의 출구 포털을 밝히면 클리어. 빛 에너지가 모두 소진되면 실패하며 직전 체크포인트로 돌아갑니다.",
-        winLoseImage: "",
+        winLoseImage: createEmptyImageAsset(),
         growth:
           "새로운 빛 속성 해금, 시야 반경 확장, 조작 콤보 해금. 메타 진행으로 코스메틱과 스토리 로그를 수집합니다.",
-        growthImage: "",
+        growthImage: createEmptyImageAsset(),
       },
       images: {
-        mainScreen: "",
-        playScreen: "",
-        ui: "",
+        mainScreen: createEmptyImageAsset(),
+        playScreen: createEmptyImageAsset(),
+        ui: createEmptyImageAsset(),
         artConcept:
           "차분한 남색·청록 배경 위에 따뜻한 노란 빛이 대비되는 톤. 레퍼런스는 Monument Valley의 미니멀 공간감과 Ori의 빛 표현입니다.",
         artColors: [
@@ -437,7 +453,6 @@
   function init() {
     state = loadState();
     syncFormFromState();
-    syncImageFitClass();
     renderPreview();
     updatePresetNote();
     prepareImagePasteTargets();
@@ -700,7 +715,16 @@
       return;
     }
 
-    if (target.matches("[data-field]")) {
+    if (target.matches("[data-image-fit-field]")) {
+      setImageFit(target.dataset.imageFitField, target.value);
+      renderImagePreview(target.dataset.imageFitField);
+    } else if (target.matches("[data-core-concept-image-fit]")) {
+      updateCoreConceptImageFit(target);
+      renderCoreConceptImagePreview(target.dataset.itemId);
+    } else if (target.matches("[data-reference-image-fit]")) {
+      updateReferenceImageFit(target);
+      renderReferenceImagePreview(target.dataset.itemId);
+    } else if (target.matches("[data-field]")) {
       setPath(state.concept, target.dataset.field, target.value);
       if (target.dataset.field === "intro.name") {
         renderComparisonTable();
@@ -716,9 +740,6 @@
     } else if (target.matches("[data-template-field]")) {
       state.template[target.dataset.templateField] = target.value;
       updatePresetNote();
-      if (target.dataset.templateField === "imageFit") {
-        syncImageFitClass();
-      }
     } else if (target.matches("[data-template-visibility]")) {
       state.template.visibility[target.dataset.templateVisibility] = target.checked;
       renderSectionOrderControls();
@@ -736,6 +757,23 @@
     );
     if (!item) return;
     item[input.dataset.referenceField] = input.value;
+  }
+
+  function updateReferenceImageFit(input) {
+    const item = state.concept.intro.references.find(
+      (reference) => reference.id === input.dataset.itemId,
+    );
+    if (!item) return;
+    item.fit = normalizeImageFit(input.value);
+  }
+
+  function updateCoreConceptImageFit(input) {
+    ensureCoreConceptImages();
+    const item = state.concept.intro.coreConceptImages.find(
+      (entry) => entry.id === input.dataset.itemId,
+    );
+    if (!item) return;
+    item.fit = normalizeImageFit(input.value);
   }
 
   function updateArtColorItem(input) {
@@ -913,13 +951,15 @@
     }
 
     if (action === "remove-image") {
-      setPath(state.concept, button.dataset.imageField, "");
+      const path = button.dataset.imageField;
+      const current = getImageAsset(path);
+      setPath(state.concept, path, { image: "", fit: current.fit });
       const input = dom.form.querySelector(
-        `input[type="file"][data-image-field="${button.dataset.imageField}"]`,
+        `input[type="file"][data-image-field="${path}"]`,
       );
       if (input) input.value = "";
-      renderImagePreview(button.dataset.imageField);
-      setImageStatus(button.dataset.imageField, "이미지를 삭제했어요.");
+      renderImagePreview(path);
+      setImageStatus(path, "이미지를 삭제했어요.");
     }
 
     if (action === "move-section-up") {
@@ -973,11 +1013,11 @@
       return false;
     }
 
-    setCoreConceptImageStatus(itemId, getImageProcessingMessage());
+    setCoreConceptImageStatus(itemId, getImageProcessingMessage(item.fit));
 
     try {
       const source = await readFileAsDataUrl(file);
-      item.image = await resizeConceptImage(source);
+      item.image = await resizeConceptImage(source, item.fit);
       renderCoreConceptImagePreview(itemId);
       renderPreview();
       scheduleSave();
@@ -998,6 +1038,7 @@
   }
 
   async function applyConceptImageFromFile(path, file, options = {}) {
+    const current = getImageAsset(path);
     if (!file.type.startsWith("image/")) {
       setImageStatus(path, "JPG, PNG, WEBP 이미지를 선택하거나 붙여넣어 주세요.", true);
       return false;
@@ -1008,11 +1049,14 @@
       return false;
     }
 
-    setImageStatus(path, getImageProcessingMessage());
+    setImageStatus(path, getImageProcessingMessage(current.fit));
 
     try {
       const source = await readFileAsDataUrl(file);
-      setPath(state.concept, path, await resizeConceptImage(source));
+      setPath(state.concept, path, {
+        image: await resizeConceptImage(source, current.fit),
+        fit: current.fit,
+      });
       renderImagePreview(path);
       renderPreview();
       scheduleSave();
@@ -1061,11 +1105,12 @@
       return false;
     }
 
-    setReferenceImageStatus(itemId, getImageProcessingMessage());
+    setReferenceImageStatus(itemId, getImageProcessingMessage(item.fit || "contain"));
 
     try {
       const source = await readFileAsDataUrl(file);
-      item.image = await resizeConceptImage(source);
+      item.image = await resizeConceptImage(source, item.fit || "contain");
+      if (!item.fit) item.fit = "contain";
       renderReferenceImagePreview(itemId);
       renderPreview();
       scheduleSave();
@@ -1094,18 +1139,83 @@
     });
   }
 
-  function resizeConceptImage(source) {
-    const fit = state.template.imageFit || "contain";
-    if (fit === "cover16x9") return resizeImageToCover(source, 1280, 720, 0.86);
-    if (fit === "cover1x1") return resizeImageToCover(source, 960, 960, 0.86);
+  function resizeConceptImage(source, fit = "contain") {
+    const mode = normalizeImageFit(fit);
+    if (mode === "cover16x9") return resizeImageToCover(source, 1280, 720, 0.86);
+    if (mode === "cover1x1") return resizeImageToCover(source, 960, 960, 0.86);
     return resizeImageToFit(source, 1280, 720, 0.86);
   }
 
-  function getImageProcessingMessage() {
-    const fit = state.template.imageFit || "contain";
-    if (fit === "cover16x9") return "이미지를 16:9로 맞춰 채우고 있어요.";
-    if (fit === "cover1x1") return "이미지를 정사각형으로 맞춰 채우고 있어요.";
+  function getImageProcessingMessage(fit = "contain") {
+    const mode = normalizeImageFit(fit);
+    if (mode === "cover16x9") return "이미지를 16:9로 맞춰 채우고 있어요.";
+    if (mode === "cover1x1") return "이미지를 정사각형으로 맞춰 채우고 있어요.";
     return "비율을 유지한 채 이미지 크기를 맞추고 있어요.";
+  }
+
+  function normalizeImageFit(value) {
+    return VALID_IMAGE_FITS.includes(value) ? value : "contain";
+  }
+
+  function sanitizeImageAsset(value, fallbackFit = "contain") {
+    if (typeof value === "string") {
+      return {
+        image: sanitizeImage(value),
+        fit: normalizeImageFit(fallbackFit),
+      };
+    }
+
+    if (value && typeof value === "object") {
+      return {
+        image: sanitizeImage(value.image ?? value.src ?? ""),
+        fit: normalizeImageFit(value.fit ?? fallbackFit),
+      };
+    }
+
+    return { image: "", fit: normalizeImageFit(fallbackFit) };
+  }
+
+  function getImageAsset(path) {
+    return sanitizeImageAsset(getPath(state.concept, path));
+  }
+
+  function setImageFit(path, fit) {
+    const current = getImageAsset(path);
+    setPath(state.concept, path, {
+      image: current.image,
+      fit: normalizeImageFit(fit),
+    });
+  }
+
+  function createDocumentImageFigure(source, altText, fit = "contain") {
+    const figure = createElement(
+      "figure",
+      `concept-document-image image-fit-${normalizeImageFit(fit)}`,
+    );
+    const image = document.createElement("img");
+    image.src = source;
+    image.alt = altText;
+    figure.append(image);
+    return figure;
+  }
+
+  function appendImageFitSelect(parent, { id, fit, onSelect }) {
+    const field = createElement("div", "field image-fit-field");
+    const label = document.createElement("label");
+    label.htmlFor = id;
+    label.textContent = "이미지 표시";
+    const select = document.createElement("select");
+    select.id = id;
+    onSelect(select);
+    IMAGE_FIT_OPTIONS.forEach((option) => {
+      const optionEl = document.createElement("option");
+      optionEl.value = option.value;
+      optionEl.textContent = option.label;
+      if (option.value === normalizeImageFit(fit)) optionEl.selected = true;
+      select.append(optionEl);
+    });
+    field.append(label, select);
+    parent.append(field);
   }
 
   function resizeImageToFit(source, maxWidth, maxHeight, quality) {
@@ -1199,14 +1309,18 @@
       `button[data-action="remove-image"][data-image-field="${path}"]`,
     );
     const uploadLabel = dom.form.querySelector(`label[for="${getImageInputId(path)}"]`);
+    const fitSelect = dom.form.querySelector(
+      `select[data-image-fit-field="${path}"]`,
+    );
     if (!preview) return;
 
-    const imageSource = sanitizeImage(getPath(state.concept, path));
+    const asset = getImageAsset(path);
+    preview.className = `photo-input-preview concept-image-preview image-fit-${asset.fit}`;
     preview.replaceChildren();
 
-    if (imageSource) {
+    if (asset.image) {
       const image = document.createElement("img");
-      image.src = imageSource;
+      image.src = asset.image;
       image.alt = `${getImageLabel(path)} 미리보기`;
       preview.append(image);
     } else {
@@ -1215,10 +1329,11 @@
       preview.append(emptyText);
     }
 
-    if (removeButton) removeButton.disabled = !imageSource;
+    if (removeButton) removeButton.disabled = !asset.image;
     if (uploadLabel) {
-      uploadLabel.textContent = imageSource ? "이미지 변경" : "이미지 선택";
+      uploadLabel.textContent = asset.image ? "이미지 변경" : "이미지 선택";
     }
+    if (fitSelect) fitSelect.value = asset.fit;
   }
 
   function getImageInputId(path) {
@@ -1253,7 +1368,10 @@
       input.checked = Boolean(state.template.visibility[input.dataset.templateVisibility]);
     });
 
-    syncImageFitClass();
+    dom.form.querySelectorAll("[data-image-fit-field]").forEach((select) => {
+      select.value = getImageAsset(select.dataset.imageFitField).fit;
+    });
+
     renderAllImagePreviews();
     renderCoreConceptImageItems();
     renderReferenceItems();
@@ -1298,9 +1416,10 @@
     header.append(title, removeButton);
 
     const imagePanel = createElement("div", "photo-upload-panel concept-image-panel");
+    const fit = normalizeImageFit(item.fit);
     const preview = createElement(
       "div",
-      "photo-input-preview concept-image-preview",
+      `photo-input-preview concept-image-preview image-fit-${fit}`,
     );
     preview.dataset.coreConceptImagePreview = item.id;
     const imageSource = sanitizeImage(item.image);
@@ -1352,7 +1471,16 @@
       "JPG, PNG, WEBP / 8MB 이하 · 선택 또는 Ctrl+V 붙여넣기";
 
     actions.append(uploadLabel, fileInput, removeImageButton);
-    copy.append(strong, description, actions, status);
+    copy.append(strong, description, actions);
+    appendImageFitSelect(copy, {
+      id: `fit-core-concept-${item.id}`,
+      fit,
+      onSelect: (select) => {
+        select.dataset.coreConceptImageFit = "";
+        select.dataset.itemId = item.id;
+      },
+    });
+    copy.append(status);
     imagePanel.append(preview, copy);
     wrapper.append(header, imagePanel);
     return wrapper;
@@ -1373,7 +1501,9 @@
     );
     if (!item || !preview) return;
 
+    const fit = normalizeImageFit(item.fit);
     const imageSource = sanitizeImage(item.image);
+    preview.className = `photo-input-preview concept-image-preview image-fit-${fit}`;
     preview.replaceChildren();
     if (imageSource) {
       const image = document.createElement("img");
@@ -1390,6 +1520,11 @@
     if (uploadLabel) {
       uploadLabel.textContent = imageSource ? "이미지 변경" : "이미지 선택";
     }
+
+    const fitSelect = dom.coreConceptImageItems?.querySelector(
+      `select[data-core-concept-image-fit][data-item-id="${itemId}"]`,
+    );
+    if (fitSelect) fitSelect.value = fit;
   }
 
   function setCoreConceptImageStatus(itemId, message, isError = false) {
@@ -1446,9 +1581,10 @@
     nameField.append(nameLabel, nameInput);
 
     const imagePanel = createElement("div", "photo-upload-panel concept-image-panel");
+    const fit = normalizeImageFit(item.fit);
     const preview = createElement(
       "div",
-      "photo-input-preview concept-image-preview",
+      `photo-input-preview concept-image-preview image-fit-${fit}`,
     );
     preview.dataset.referenceImagePreview = item.id;
     const imageSource = sanitizeImage(item.image);
@@ -1500,7 +1636,16 @@
       "JPG, PNG, WEBP / 8MB 이하 · 선택 또는 Ctrl+V 붙여넣기";
 
     actions.append(uploadLabel, fileInput, removeImageButton);
-    copy.append(strong, description, actions, status);
+    copy.append(strong, description, actions);
+    appendImageFitSelect(copy, {
+      id: `fit-reference-${item.id}`,
+      fit,
+      onSelect: (select) => {
+        select.dataset.referenceImageFit = "";
+        select.dataset.itemId = item.id;
+      },
+    });
+    copy.append(status);
     imagePanel.append(preview, copy);
 
     wrapper.append(header, nameField, imagePanel);
@@ -1522,7 +1667,9 @@
     );
     if (!item || !preview) return;
 
+    const fit = normalizeImageFit(item.fit);
     const imageSource = sanitizeImage(item.image);
+    preview.className = `photo-input-preview concept-image-preview image-fit-${fit}`;
     preview.replaceChildren();
 
     if (imageSource) {
@@ -1540,6 +1687,11 @@
     if (uploadLabel) {
       uploadLabel.textContent = imageSource ? "이미지 변경" : "이미지 선택";
     }
+
+    const fitSelect = dom.referenceItems?.querySelector(
+      `select[data-reference-image-fit][data-item-id="${itemId}"]`,
+    );
+    if (fitSelect) fitSelect.value = fit;
   }
 
   function setReferenceImageStatus(itemId, message, isError = false) {
@@ -2285,12 +2437,13 @@
           `concept-image-gallery count-${Math.min(3, conceptImages.length)}`,
         );
         conceptImages.forEach((item, index) => {
-          const figure = createElement("figure", "concept-document-image");
-          const image = document.createElement("img");
-          image.src = sanitizeImage(item.image);
-          image.alt = `핵심 컨셉 이미지 ${index + 1}`;
-          figure.append(image);
-          gallery.append(figure);
+          gallery.append(
+            createDocumentImageFigure(
+              sanitizeImage(item.image),
+              `핵심 컨셉 이미지 ${index + 1}`,
+              item.fit,
+            ),
+          );
         });
         entry.append(gallery);
       }
@@ -2360,12 +2513,13 @@
 
             const imageSource = sanitizeImage(item.image);
             if (imageSource) {
-              const figure = createElement("figure", "concept-document-image");
-              const image = document.createElement("img");
-              image.src = imageSource;
-              image.alt = `${nameText || "레퍼런스"} 레퍼런스 이미지`;
-              figure.append(image);
-              card.append(figure);
+              card.append(
+                createDocumentImageFigure(
+                  imageSource,
+                  `${nameText || "레퍼런스"} 레퍼런스 이미지`,
+                  item.fit,
+                ),
+              );
             }
 
             referenceList.append(card);
@@ -2389,12 +2543,13 @@
 
           const imageSource = sanitizeImage(item.image);
           if (imageSource) {
-            const figure = createElement("figure", "concept-document-image");
-            const image = document.createElement("img");
-            image.src = imageSource;
-            image.alt = `${clean(item.name)} 레퍼런스 이미지`;
-            figure.append(image);
-            card.append(figure);
+            card.append(
+              createDocumentImageFigure(
+                imageSource,
+                `${clean(item.name)} 레퍼런스 이미지`,
+                item.fit,
+              ),
+            );
           }
 
           referenceList.append(card);
@@ -2621,8 +2776,8 @@
 
   function appendTextAndImageEntry(list, label, rawText, rawImage) {
     const text = clean(rawText);
-    const imageSource = sanitizeImage(rawImage);
-    if (!text && !imageSource) return;
+    const asset = sanitizeImageAsset(rawImage);
+    if (!text && !asset.image) return;
 
     const entry = createElement("article", "resume-entry concept-entry");
     const heading = createElement("h3", "entry-title");
@@ -2635,13 +2790,10 @@
       entry.append(body);
     }
 
-    if (imageSource) {
-      const figure = createElement("figure", "concept-document-image");
-      const image = document.createElement("img");
-      image.src = imageSource;
-      image.alt = `${label} 이미지`;
-      figure.append(image);
-      entry.append(figure);
+    if (asset.image) {
+      entry.append(
+        createDocumentImageFigure(asset.image, `${label} 이미지`, asset.fit),
+      );
     }
 
     list.append(entry);
@@ -2718,20 +2870,17 @@
     const images = state.concept.images;
 
     IMAGE_FIELDS.forEach((item) => {
-      const key = item.path.split(".")[1];
-      const source = sanitizeImage(images[key]);
-      if (!source) return;
+      if (!item.path.startsWith("images.")) return;
+      const asset = getImageAsset(item.path);
+      if (!asset.image) return;
 
       const entry = createElement("article", "resume-entry concept-image-entry");
       const heading = createElement("h3", "entry-title");
-      const figure = createElement("figure", "concept-document-image");
-      const image = document.createElement("img");
-
       heading.textContent = item.label;
-      image.src = source;
-      image.alt = item.label;
-      figure.append(image);
-      entry.append(heading, figure);
+      entry.append(
+        heading,
+        createDocumentImageFigure(asset.image, item.label, asset.fit),
+      );
       list.append(entry);
     });
 
@@ -2835,7 +2984,7 @@
         return nonEmptyArtColors().length > 0;
       }
       if (sectionKey === "images" && field !== "artConcept") {
-        return Boolean(sanitizeImage(value));
+        return Boolean(sanitizeImageAsset(value).image);
       }
       if (
         (sectionKey === "intro" ||
@@ -2843,7 +2992,7 @@
           sectionKey === "gameplay") &&
         String(field).endsWith("Image")
       ) {
-        return Boolean(sanitizeImage(value));
+        return Boolean(sanitizeImageAsset(value).image);
       }
       if (sectionKey === "intro" && field === "coreConceptImages") {
         return nonEmptyCoreConceptImages().length > 0;
@@ -2875,17 +3024,11 @@
       LAYOUT_NOTES[state.template.layout] || LAYOUT_NOTES.standard;
   }
 
-  function syncImageFitClass() {
-    document.documentElement.dataset.imageFit =
-      state.template.imageFit || "contain";
-  }
-
   function documentTemplateClasses() {
     const classes = [
       `layout-${state.template.layout || "standard"}`,
       `font-${state.template.fontSize || "medium"}`,
       `theme-${state.template.theme || "neutral"}`,
-      `image-fit-${state.template.imageFit || "contain"}`,
     ];
 
     if (state.template.pageMargin && state.template.pageMargin !== "preset") {
@@ -2915,11 +3058,14 @@
 
     try {
       const rawConcept = parseStoredJson(STORAGE_KEYS.concept);
-      const concept = sanitizeConcept(rawConcept, defaults.concept);
-      const template = sanitizeTemplate(
-        parseStoredJson(STORAGE_KEYS.template),
-        defaults.template,
+      const rawTemplate = parseStoredJson(STORAGE_KEYS.template);
+      const legacyImageFit = normalizeImageFit(rawTemplate?.imageFit);
+      const concept = sanitizeConcept(
+        rawConcept,
+        defaults.concept,
+        legacyImageFit,
       );
+      const template = sanitizeTemplate(rawTemplate, defaults.template);
 
       if (!clean(template.author) && rawConcept?.intro) {
         template.author =
@@ -2940,29 +3086,34 @@
     return JSON.parse(value);
   }
 
-  function sanitizeConcept(source, fallback) {
+  function sanitizeConcept(source, fallback, legacyImageFit = "contain") {
     if (!source || typeof source !== "object") return fallback;
+    const fitFallback = normalizeImageFit(legacyImageFit);
 
     return {
-      intro: sanitizeIntro(source.intro, fallback.intro),
+      intro: sanitizeIntro(source.intro, fallback.intro, fitFallback),
       features: {
         whySpecial: coerceText(source.features?.whySpecial),
-        whySpecialImage: sanitizeImage(source.features?.whySpecialImage),
+        whySpecialImage: sanitizeImageAsset(
+          source.features?.whySpecialImage,
+          fitFallback,
+        ),
         differentiationText: sanitizeDifferentiationText(source.features),
         playerExperience: coerceText(source.features?.playerExperience),
-        playerExperienceImage: sanitizeImage(
+        playerExperienceImage: sanitizeImageAsset(
           source.features?.playerExperienceImage,
+          fitFallback,
         ),
         ...sanitizeComparisonBlock(source.features),
       },
-      gameplay: sanitizeGameplay(source.gameplay, fallback.gameplay),
+      gameplay: sanitizeGameplay(source.gameplay, fallback.gameplay, fitFallback),
       images: {
         ...sanitizeTextObject(source.images, {
           artConcept: fallback.images.artConcept,
         }),
-        mainScreen: sanitizeImage(source.images?.mainScreen),
-        playScreen: sanitizeImage(source.images?.playScreen),
-        ui: sanitizeImage(source.images?.ui),
+        mainScreen: sanitizeImageAsset(source.images?.mainScreen, fitFallback),
+        playScreen: sanitizeImageAsset(source.images?.playScreen, fitFallback),
+        ui: sanitizeImageAsset(source.images?.ui, fitFallback),
         artConcept: coerceText(source.images?.artConcept),
         artColors: sanitizeArtColors(source.images?.artColors),
       },
@@ -2972,16 +3123,17 @@
     };
   }
 
-  function sanitizeGameplay(source, fallback) {
+  function sanitizeGameplay(source, fallback, legacyImageFit = "contain") {
+    const fitFallback = normalizeImageFit(legacyImageFit);
     return {
       flow: coerceText(source?.flow),
-      flowImage: sanitizeImage(source?.flowImage),
+      flowImage: sanitizeImageAsset(source?.flowImage, fitFallback),
       coreSystems: coerceText(source?.coreSystems),
-      coreSystemsImage: sanitizeImage(source?.coreSystemsImage),
+      coreSystemsImage: sanitizeImageAsset(source?.coreSystemsImage, fitFallback),
       winLose: coerceText(source?.winLose),
-      winLoseImage: sanitizeImage(source?.winLoseImage),
+      winLoseImage: sanitizeImageAsset(source?.winLoseImage, fitFallback),
       growth: coerceText(source?.growth),
-      growthImage: sanitizeImage(source?.growthImage),
+      growthImage: sanitizeImageAsset(source?.growthImage, fitFallback),
     };
   }
 
@@ -3000,7 +3152,8 @@
       .filter(Boolean);
   }
 
-  function sanitizeIntro(source, fallback) {
+  function sanitizeIntro(source, fallback, legacyImageFit = "contain") {
+    const fitFallback = normalizeImageFit(legacyImageFit);
     const intro = sanitizeTextObject(source, {
       name: fallback.name,
       oneLiner: fallback.oneLiner,
@@ -3012,8 +3165,9 @@
     intro.coreConceptImages = sanitizeCoreConceptImages(
       source?.coreConceptImages,
       source?.coreConceptImage,
+      fitFallback,
     );
-    intro.references = sanitizeReferences(source?.references);
+    intro.references = sanitizeReferences(source?.references, fitFallback);
     if (
       !clean(intro.genre) &&
       !clean(intro.platform) &&
@@ -3032,7 +3186,8 @@
     return intro;
   }
 
-  function sanitizeCoreConceptImages(source, legacyImage) {
+  function sanitizeCoreConceptImages(source, legacyImage, legacyImageFit = "contain") {
+    const fitFallback = normalizeImageFit(legacyImageFit);
     const rows = [];
 
     if (Array.isArray(source)) {
@@ -3041,6 +3196,7 @@
         rows.push({
           id: coerceText(item.id) || createId("core-image"),
           image: sanitizeImage(item.image),
+          fit: normalizeImageFit(item.fit ?? fitFallback),
         });
       });
     }
@@ -3051,6 +3207,7 @@
         rows.push({
           id: createId("core-image"),
           image: legacy,
+          fit: fitFallback,
         });
       }
     }
@@ -3058,7 +3215,8 @@
     return rows.slice(0, MAX_CORE_CONCEPT_IMAGES);
   }
 
-  function sanitizeReferences(source) {
+  function sanitizeReferences(source, legacyImageFit = "contain") {
+    const fitFallback = normalizeImageFit(legacyImageFit);
     if (!Array.isArray(source)) return [createEmptyReference()];
 
     const rows = source
@@ -3068,6 +3226,7 @@
           id: coerceText(item.id) || createId("reference"),
           name: coerceText(item.name),
           image: sanitizeImage(item.image),
+          fit: normalizeImageFit(item.fit ?? fitFallback),
         };
       })
       .filter(Boolean);
@@ -3182,7 +3341,6 @@
     ];
     const validFontSizes = ["small", "medium", "large"];
     const validThemes = ["neutral", "graphite"];
-    const validImageFits = ["contain", "cover16x9", "cover1x1"];
     const validPageMargins = ["preset", "narrow", "normal", "wide"];
     const validSectionSpacings = ["preset", "tight", "normal", "relaxed"];
     const validHeadingStyles = ["preset", "line", "numbered", "minimal"];
@@ -3210,9 +3368,6 @@
       theme: validThemes.includes(source.theme)
         ? source.theme
         : fallback.theme,
-      imageFit: validImageFits.includes(source.imageFit)
-        ? source.imageFit
-        : fallback.imageFit,
       pageMargin: validPageMargins.includes(source.pageMargin)
         ? source.pageMargin
         : fallback.pageMargin,
@@ -3394,7 +3549,11 @@
       template: createDefaultTemplate(),
     };
 
-    state.concept = sanitizeConcept(project.concept, defaults.concept);
+    state.concept = sanitizeConcept(
+      project.concept,
+      defaults.concept,
+      normalizeImageFit(project.template?.imageFit),
+    );
     state.template = sanitizeTemplate(project.template, defaults.template);
 
     if (!clean(state.template.author) && project.concept?.intro) {
@@ -3404,7 +3563,6 @@
     }
 
     syncFormFromState();
-    syncImageFitClass();
     renderPreview();
     updatePresetNote();
     IMAGE_FIELDS.forEach((item) => {
@@ -3590,7 +3748,7 @@
 
     const imageNotes = [];
     IMAGE_FIELDS.forEach((item) => {
-      if (sanitizeImage(getPath(state.concept, item.path))) {
+      if (getImageAsset(item.path).image) {
         imageNotes.push(`- ${item.label}: 있음`);
       }
     });
