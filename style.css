@@ -616,6 +616,24 @@ summary:focus-visible,
   object-fit: contain;
 }
 
+/* 비율 유지: 가로·세로 한도를 모두 지키며 축소 (아래 잘림 방지) */
+.concept-document-image.image-fit-contain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  max-height: none;
+  background: #f4f6f8;
+}
+
+.concept-document-image.image-fit-contain img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+}
+
 .concept-image-gallery {
   display: grid;
   gap: 10px;
@@ -2269,6 +2287,18 @@ summary:focus-visible,
   object-fit: contain;
 }
 
+.layout-slides .concept-document-image.image-fit-contain {
+  max-height: none;
+  overflow: visible;
+}
+
+.layout-slides .concept-document-image.image-fit-contain img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 380px;
+}
+
 .layout-slides .concept-image-gallery {
   gap: 12px;
   margin-top: 12px;
@@ -2279,6 +2309,14 @@ summary:focus-visible,
 }
 
 .layout-slides .concept-image-gallery .concept-document-image img {
+  max-height: 240px;
+}
+
+.layout-slides .concept-image-gallery .concept-document-image.image-fit-contain {
+  max-height: none;
+}
+
+.layout-slides .concept-image-gallery .concept-document-image.image-fit-contain img {
   max-height: 240px;
 }
 
@@ -2361,6 +2399,17 @@ summary:focus-visible,
   width: auto;
   max-width: 100%;
   object-fit: contain;
+}
+
+.layout-slides .slide-reference-grid .concept-document-image.image-fit-contain {
+  max-height: none;
+}
+
+.layout-slides .slide-reference-grid .concept-document-image.image-fit-contain img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 240px;
 }
 
 .layout-slides .comparison-table-wrap {
