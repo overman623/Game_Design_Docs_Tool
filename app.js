@@ -38,6 +38,7 @@
   const VALID_IMAGE_FITS = IMAGE_FIT_OPTIONS.map((item) => item.value);
 
   const IMAGE_FIELDS = [
+    { path: "intro.playQrImage", label: "실행 링크 QR", inputId: "image-play-qr" },
     { path: "features.whySpecialImage", label: "특별함 설명 이미지", inputId: "image-why-special" },
     {
       path: "features.playerExperienceImage",
@@ -60,6 +61,8 @@
   const SECTION_FIELDS = {
     intro: [
       "name",
+      "playUrl",
+      "playQrImage",
       "oneLiner",
       "coreConcept",
       "coreConceptImages",
@@ -94,6 +97,7 @@
 
   const FIELD_LABELS = {
     "intro.name": "게임이름",
+    "intro.playUrl": "실행 링크",
     "intro.oneLiner": "한 줄 소개",
     "intro.coreConcept": "게임의 핵심 컨셉",
     "intro.genre": "장르",
@@ -258,6 +262,8 @@
     return {
       intro: {
         name: "",
+        playUrl: "",
+        playQrImage: createEmptyImageAsset("cover1x1"),
         oneLiner: "",
         coreConcept: "",
         coreConceptImages: [],
@@ -336,6 +342,8 @@
     return {
       intro: {
         name: "루멘 드리프트",
+        playUrl: "https://studio-lumen.example/lumen-drift",
+        playQrImage: createEmptyImageAsset("cover1x1"),
         oneLiner: "빛을 모아 미로를 밝히는 2D 퍼즐 어드벤처",
         coreConcept:
           "플레이어는 어둠 속 미로에서 빛 조각을 수집하고, 그 빛으로 길을 열며 숨겨진 공간을 탐험합니다. 전투보다 ‘공간을 해석하는 재미’가 중심입니다.",
@@ -2387,7 +2395,8 @@
     if (isSlideLayout()) {
       const gameName = clean(intro.name);
       const oneLiner = clean(intro.oneLiner);
-      if (gameName || oneLiner) {
+      const hasPlayLink = hasPlayLinkContent();
+      if (gameName || oneLiner || hasPlayLink) {
         const entry = createElement(
           "article",
           "resume-entry concept-entry slide-combined-entry",
@@ -2400,6 +2409,9 @@
           nameBody.textContent = gameName;
           nameBlock.append(nameHeading, nameBody);
           entry.append(nameBlock);
+        }
+        if (hasPlayLink) {
+          entry.append(createPlayLinkBlock("slide-field-block play-link-entry"));
         }
         if (oneLiner) {
           const lineBlock = createElement("div", "slide-field-block");
@@ -2414,6 +2426,9 @@
       }
     } else {
       appendTextEntry(list, "게임이름", intro.name);
+      if (hasPlayLinkContent()) {
+        list.append(createPlayLinkEntry());
+      }
       appendTextEntry(list, "한 줄 소개", intro.oneLiner);
     }
 
@@ -2562,6 +2577,86 @@
 
     section.append(list);
     return section;
+  }
+
+  function hasPlayLinkContent() {
+    const playUrl = clean(state.concept.intro.playUrl);
+    const qrSource = sanitizeImage(
+      sanitizeImageAsset(state.concept.intro.playQrImage).image,
+    );
+    return Boolean(playUrl || qrSource);
+  }
+
+  function createPlayLinkEntry() {
+    const entry = createElement("article", "resume-entry concept-entry play-link-entry");
+    entry.append(...Array.from(createPlayLinkBlock().childNodes));
+    return entry;
+  }
+
+  function createPlayLinkBlock(className = "") {
+    const playUrl = clean(state.concept.intro.playUrl);
+    const href = normalizeExternalUrl(playUrl);
+    const qrAsset = sanitizeImageAsset(state.concept.intro.playQrImage);
+    const qrSource = sanitizeImage(qrAsset.image);
+
+    const block = createElement("div", className || "play-link-block");
+    const heading = createElement("h3", "entry-title");
+    heading.textContent = "실행 링크";
+    block.append(heading);
+
+    const body = createElement("div", "play-link-document");
+    if (qrSource) {
+      const figure = createDocumentImageFigure(
+        qrSource,
+        "실행 링크 QR 코드",
+        qrAsset.fit || "cover1x1",
+      );
+      figure.classList.add("play-link-qr");
+      if (href) {
+        const link = document.createElement("a");
+        link.href = href;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.className = "play-link-qr-anchor";
+        link.append(figure);
+        body.append(link);
+      } else {
+        body.append(figure);
+      }
+    }
+
+    if (playUrl) {
+      const urlWrap = createElement("div", "play-link-url-wrap");
+      const label = createElement("p", "play-link-url-label");
+      label.textContent = "링크 주소";
+      urlWrap.append(label);
+
+      if (href) {
+        const anchor = document.createElement("a");
+        anchor.href = href;
+        anchor.target = "_blank";
+        anchor.rel = "noopener noreferrer";
+        anchor.className = "play-link-url entry-description";
+        anchor.textContent = playUrl;
+        urlWrap.append(anchor);
+      } else {
+        const text = createElement("p", "play-link-url entry-description");
+        text.textContent = playUrl;
+        urlWrap.append(text);
+      }
+      body.append(urlWrap);
+    }
+
+    block.append(body);
+    return block;
+  }
+
+  function normalizeExternalUrl(value) {
+    const text = clean(value);
+    if (!text) return "";
+    if (/^(https?:|mailto:|tel:)/i.test(text)) return text;
+    if (/^\/\//.test(text)) return `https:${text}`;
+    return `https://${text}`;
   }
 
   function chunkItems(items, size) {
@@ -3156,12 +3251,17 @@
     const fitFallback = normalizeImageFit(legacyImageFit);
     const intro = sanitizeTextObject(source, {
       name: fallback.name,
+      playUrl: fallback.playUrl,
       oneLiner: fallback.oneLiner,
       coreConcept: fallback.coreConcept,
       genre: fallback.genre,
       platform: fallback.platform,
       target: fallback.target,
     });
+    intro.playQrImage = sanitizeImageAsset(
+      source?.playQrImage,
+      normalizeImageFit(source?.playQrImage?.fit ?? "cover1x1"),
+    );
     intro.coreConceptImages = sanitizeCoreConceptImages(
       source?.coreConceptImages,
       source?.coreConceptImage,
@@ -3687,6 +3787,10 @@
 
     const introLines = [];
     appendPromptField(introLines, "intro.name");
+    appendPromptField(introLines, "intro.playUrl");
+    if (sanitizeImageAsset(state.concept.intro.playQrImage).image) {
+      introLines.push("- 실행 링크 QR: 포함");
+    }
     appendPromptField(introLines, "intro.oneLiner");
     appendPromptField(introLines, "intro.coreConcept");
     const coreConceptImageCount = nonEmptyCoreConceptImages().length;

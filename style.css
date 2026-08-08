@@ -682,6 +682,74 @@ summary:focus-visible,
   margin-bottom: 6px;
 }
 
+.play-link-field > .field-help {
+  margin: 0 0 10px;
+}
+
+.play-link-field .play-qr-panel {
+  margin-top: 12px;
+}
+
+.play-link-document {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 18px;
+  margin-top: 4px;
+}
+
+.play-link-qr-anchor {
+  display: inline-flex;
+  color: inherit;
+  text-decoration: none;
+}
+
+.play-link-document .play-link-qr {
+  width: 112px;
+  max-width: 112px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.play-link-document .play-link-qr.image-fit-cover1x1 {
+  max-width: 112px;
+}
+
+.play-link-document .play-link-qr img {
+  max-height: 112px;
+}
+
+.play-link-document .play-link-qr.image-fit-contain img {
+  max-height: 112px;
+}
+
+.play-link-url-wrap {
+  display: grid;
+  gap: 4px;
+  min-width: min(100%, 220px);
+  flex: 1 1 220px;
+}
+
+.play-link-url-label {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.play-link-url {
+  margin: 0;
+  word-break: break-all;
+  color: var(--accent-dark);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a.play-link-url:hover {
+  color: var(--focus);
+}
+
 .comparison-field > .field-help {
   margin: 0 0 10px;
 }
@@ -1435,6 +1503,14 @@ summary:focus-visible,
 .document-sheet.theme-graphite .art-palette-chip {
   border-color: var(--doc-soft-border);
   background: var(--doc-soft);
+}
+
+.document-sheet.theme-graphite .play-link-url {
+  color: #dbe4f0;
+}
+
+.document-sheet.theme-graphite .play-link-url-label {
+  color: var(--doc-muted);
 }
 
 .document-sheet.theme-graphite .art-palette-hex {
@@ -2376,6 +2452,20 @@ summary:focus-visible,
 
 .layout-slides .slide-field-block .entry-title {
   margin-bottom: 8px;
+}
+
+.layout-slides .play-link-document .play-link-qr {
+  width: 128px;
+  max-width: 128px;
+}
+
+.layout-slides .play-link-document .play-link-qr.image-fit-cover1x1 {
+  max-width: 128px;
+}
+
+.layout-slides .play-link-document .play-link-qr img,
+.layout-slides .play-link-document .play-link-qr.image-fit-contain img {
+  max-height: 128px;
 }
 
 .layout-slides .slide-reference-grid {

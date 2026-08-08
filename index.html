@@ -8,10 +8,10 @@
       content="게임 컨셉 기획서를 정리하고 PDF, PPTX, Figma SVG로 저장할 수 있는 도구"
     />
     <title>게임 컨셉 기획서 만들기</title>
-    <link rel="stylesheet" href="style.css?v=20260726-11" />
-    <script src="vendor/pptxgen.bundle.js?v=20260726-11" defer></script>
-    <script src="app.js?v=20260726-11" defer></script>
-    <script src="export.js?v=20260726-11" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260808-01" />
+    <script src="vendor/pptxgen.bundle.js?v=20260808-01" defer></script>
+    <script src="app.js?v=20260808-01" defer></script>
+    <script src="export.js?v=20260808-01" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -259,7 +259,7 @@
               <span class="summary-number">01</span>
               <span>
                 <strong>게임 소개</strong>
-                <small>이름, 한 줄 소개, 핵심 컨셉부터 적어 보세요.</small>
+                <small>이름, 실행 링크, 한 줄 소개, 핵심 컨셉부터 적어 보세요.</small>
               </span>
             </summary>
             <div class="section-body">
@@ -271,6 +271,76 @@
                   data-field="intro.name"
                   placeholder="예: 루멘 드리프트"
                 />
+              </div>
+              <div class="field play-link-field">
+                <label>실행 링크</label>
+                <p class="field-help">
+                  플레이·다운로드·데모 주소를 넣을 수 있어요. 링크 주소와 QR
+                  이미지는 각각 선택 사항이며, 하나만 넣어도 됩니다.
+                </p>
+                <div class="field">
+                  <label for="game-play-url">링크 주소</label>
+                  <input
+                    id="game-play-url"
+                    type="url"
+                    data-field="intro.playUrl"
+                    placeholder="예: https://store.steampowered.com/app/… 또는 데모 URL"
+                  />
+                </div>
+                <div class="photo-upload-panel concept-image-panel play-qr-panel">
+                  <div
+                    class="photo-input-preview concept-image-preview"
+                    data-image-preview="intro.playQrImage"
+                  >
+                    <span>이미지 없음</span>
+                  </div>
+                  <div class="photo-upload-copy">
+                    <strong>QR 코드 이미지</strong>
+                    <p>
+                      실행 링크용 QR 이미지를 선택적으로 넣어 주세요. 문서에는
+                      정사각형으로 작게 표시됩니다.
+                    </p>
+                    <div class="photo-actions">
+                      <label
+                        class="button button-secondary photo-upload-button"
+                        for="image-play-qr"
+                      >
+                        이미지 선택
+                      </label>
+                      <input
+                        id="image-play-qr"
+                        class="visually-hidden"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        data-image-field="intro.playQrImage"
+                      />
+                      <button
+                        class="button button-delete"
+                        type="button"
+                        data-action="remove-image"
+                        data-image-field="intro.playQrImage"
+                      >
+                        이미지 삭제
+                      </button>
+                    </div>
+                    <div class="field image-fit-field">
+                      <label for="fit-play-qr">이미지 표시</label>
+                      <select
+                        id="fit-play-qr"
+                        data-image-fit-field="intro.playQrImage"
+                      >
+                        <option value="contain">비율 유지 (전체 표시)</option>
+                        <option value="cover16x9">16:9로 채우기 (잘림)</option>
+                        <option value="cover1x1" selected>
+                          정사각형으로 채우기 (잘림)
+                        </option>
+                      </select>
+                    </div>
+                    <p class="field-help" data-image-status="intro.playQrImage">
+                      JPG, PNG, WEBP / 8MB 이하 · 선택 또는 Ctrl+V 붙여넣기
+                    </p>
+                  </div>
+                </div>
               </div>
               <div class="field">
                 <label for="game-one-liner">한 줄 소개</label>
